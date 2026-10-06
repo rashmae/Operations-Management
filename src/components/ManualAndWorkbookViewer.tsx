@@ -301,17 +301,17 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                     <span>Exp Smoothing $\alpha = 0.50$ Dev Result</span>
                   </td>
                   <td className="py-2.5 px-4 font-mono text-emerald-400 font-bold">
-                    MAE = 30,595.71 | RMSE = 38,241.15 | MAPE = 8.92%
+                    MAE = 30,595.71 | RMSE = 38,533.72 | MAPE = 8.80%
                   </td>
                 </tr>
                 <tr>
                   <td className="py-2.5 px-4 font-semibold text-slate-300">Exp Smoothing $\alpha = 0.80$</td>
-                  <td className="py-2.5 px-4 font-mono text-slate-200">MAE = 32,183.02 | RMSE = 40,073.86 | MAPE = 9.66%</td>
+                  <td className="py-2.5 px-4 font-mono text-slate-200">MAE = 32,183.02 | RMSE = 39,049.88 | MAPE = 9.26%</td>
                 </tr>
                 <tr>
                   <td className="py-2.5 px-4 font-semibold text-slate-300">Trend Projection Dev Result</td>
                   <td className="py-2.5 px-4 font-mono text-slate-200">
-                    y_t = 411,620.96 - 2,216.33*t | MAE = 41,174.79 | MAPE = 10.36% (r = 0.06 near zero)
+                    y_t = 411,620.96 - 2,216.33*t | MAE = 35,201.27 | RMSE = 45,232.84 | MAPE = 10.12% (r = -0.39)
                   </td>
                 </tr>
                 <tr className="bg-sky-500/20 font-bold border-y-2 border-sky-400/50">
@@ -375,32 +375,35 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/80">
+                  <tr className="hover:bg-slate-900/40 bg-sky-500/10 font-bold">
+                    <td className="py-2.5 px-4 text-white font-sans font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>ARIMA (1,1,0) ★</span>
+                    </td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">20,919.10</td>
+                    <td className="py-2.5 px-4">596,600,000.00</td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">24,425.80</td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">4.71%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">4.82%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">+2.43%</td>
+                  </tr>
                   <tr className="hover:bg-slate-900/40">
-                    <td className="py-2.5 px-4 text-white font-sans font-bold">ARIMA (1,1,1)</td>
-                    <td className="py-2.5 px-4">24,274.04</td>
-                    <td className="py-2.5 px-4">834,110,543.00</td>
-                    <td className="py-2.5 px-4">28,880.97</td>
-                    <td className="py-2.5 px-4 text-sky-300 font-bold">5.46%</td>
-                    <td className="py-2.5 px-4">5.66%</td>
-                    <td className="py-2.5 px-4 text-emerald-400">+4.18%</td>
+                    <td className="py-2.5 px-4 text-slate-200 font-sans">Random Forest (100 Trees)</td>
+                    <td className="py-2.5 px-4">37,138.00</td>
+                    <td className="py-2.5 px-4">1,848,000,000.00</td>
+                    <td className="py-2.5 px-4">42,988.00</td>
+                    <td className="py-2.5 px-4 text-amber-300 font-bold">8.31%</td>
+                    <td className="py-2.5 px-4">8.79%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">+7.34%</td>
                   </tr>
                   <tr className="hover:bg-slate-900/40">
                     <td className="py-2.5 px-4 text-slate-200 font-sans">Lagged Linear Regression</td>
                     <td className="py-2.5 px-4">37,990.11</td>
                     <td className="py-2.5 px-4">1,727,189,190.00</td>
                     <td className="py-2.5 px-4">41,559.48</td>
-                    <td className="py-2.5 px-4">8.48%</td>
+                    <td className="py-2.5 px-4 text-slate-300">8.48%</td>
                     <td className="py-2.5 px-4">8.93%</td>
                     <td className="py-2.5 px-4 text-emerald-400">+8.48%</td>
-                  </tr>
-                  <tr className="hover:bg-slate-900/40">
-                    <td className="py-2.5 px-4 text-red-300 font-sans">Random Forest (max_depth=3)</td>
-                    <td className="py-2.5 px-4">50,027.88</td>
-                    <td className="py-2.5 px-4">2,607,666,922.00</td>
-                    <td className="py-2.5 px-4">51,065.32</td>
-                    <td className="py-2.5 px-4 text-red-400 font-bold">11.19%</td>
-                    <td className="py-2.5 px-4">11.88%</td>
-                    <td className="py-2.5 px-4 text-red-400">+11.19%</td>
                   </tr>
                 </tbody>
               </table>
@@ -414,7 +417,7 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                 Part IX · Table 18 (Page 14)
               </span>
               <h3 className="text-lg font-bold text-white mt-0.5">
-                Finalist Accuracy Comparison (Best Conventional vs ARIMA vs Best ML)
+                Finalist Accuracy Comparison (Best Statistical vs Conventional Baseline vs Best ML)
               </h3>
             </div>
 
@@ -432,11 +435,29 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/80">
-                  <tr className="bg-sky-500/10 font-bold">
+                  <tr className="bg-sky-500/15 font-bold">
                     <td className="py-2.5 px-4 text-white font-sans flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-sky-400" />
-                      <span>Best Conventional: 3-Period WMA</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Statistical Winner: ARIMA (1,1,0) ★</span>
                     </td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">20,919.10</td>
+                    <td className="py-2.5 px-4">596,600,000.00</td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">24,425.80</td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">4.71%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">4.82%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">+2.43%</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 px-4 text-slate-200 font-sans">Conventional Baseline: ETS α = 0.50</td>
+                    <td className="py-2.5 px-4">27,725.00</td>
+                    <td className="py-2.5 px-4">1,093,200,000.00</td>
+                    <td className="py-2.5 px-4">33,064.00</td>
+                    <td className="py-2.5 px-4 text-sky-300 font-bold">6.22%</td>
+                    <td className="py-2.5 px-4">6.49%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">+4.93%</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 px-4 text-slate-200 font-sans">Alternative Conventional: 3-Period WMA</td>
                     <td className="py-2.5 px-4">28,473.35</td>
                     <td className="py-2.5 px-4">1,086,514,040.25</td>
                     <td className="py-2.5 px-4">32,962.31</td>
@@ -445,22 +466,13 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                     <td className="py-2.5 px-4 text-emerald-400">+4.12%</td>
                   </tr>
                   <tr>
-                    <td className="py-2.5 px-4 text-slate-200 font-sans">Statistical: ARIMA (1,1,1)</td>
-                    <td className="py-2.5 px-4">24,274.04</td>
-                    <td className="py-2.5 px-4">834,110,543.00</td>
-                    <td className="py-2.5 px-4">28,880.97</td>
-                    <td className="py-2.5 px-4">5.46%</td>
-                    <td className="py-2.5 px-4">5.66%</td>
-                    <td className="py-2.5 px-4 text-emerald-400">+4.18%</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 px-4 text-slate-200 font-sans">Best ML: Lagged Linear Regression</td>
-                    <td className="py-2.5 px-4">37,990.11</td>
-                    <td className="py-2.5 px-4">1,727,189,190.00</td>
-                    <td className="py-2.5 px-4">41,559.48</td>
-                    <td className="py-2.5 px-4">8.48%</td>
-                    <td className="py-2.5 px-4">8.93%</td>
-                    <td className="py-2.5 px-4 text-emerald-400">+8.48%</td>
+                    <td className="py-2.5 px-4 text-slate-200 font-sans">Machine Learning: Random Forest (100 Trees)</td>
+                    <td className="py-2.5 px-4">37,138.00</td>
+                    <td className="py-2.5 px-4">1,848,000,000.00</td>
+                    <td className="py-2.5 px-4">42,988.00</td>
+                    <td className="py-2.5 px-4 text-amber-300">8.31%</td>
+                    <td className="py-2.5 px-4">8.79%</td>
+                    <td className="py-2.5 px-4 text-emerald-400">+7.34%</td>
                   </tr>
                 </tbody>
               </table>
@@ -469,26 +481,26 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
             {/* Finalist Operational Trade-Offs (Required by Manual) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 font-sans text-xs">
               <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <span className="font-bold text-sky-400">3-Period WMA Trade-Off:</span>
+                <span className="font-bold text-sky-400">ARIMA (1,1,0) Trade-Off:</span>
                 <p className="text-slate-300 leading-relaxed">
-                  <strong>Advantage:</strong> Fast, auditable, runs natively in spreadsheets with zero code failure risk.<br />
-                  <strong>Limitation:</strong> Requires consecutive historical data; cannot anticipate sudden policy walkouts.
+                  <strong>Advantage:</strong> Lowest error on all 6 validation metrics (20,919 MAE · 4.71% MAPE). First-differencing adapts rapidly to the 2024 level shift.<br />
+                  <strong>Limitation:</strong> Requires Python code execution; requires timely monthly re-estimation once latest actual is confirmed.
                 </p>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <span className="font-bold text-sky-400">ARIMA (1,1,1) Trade-Off:</span>
+                <span className="font-bold text-sky-400">ETS α = 0.50 Baseline Trade-Off:</span>
                 <p className="text-slate-300 leading-relaxed">
-                  <strong>Advantage:</strong> Highest mathematical accuracy (5.46% MAPE).<br />
-                  <strong>Limitation:</strong> Opaque statistical parameters for terminal dock foremen; sensitive to model order drift.
+                  <strong>Advantage:</strong> Lowest development error (30,596 MAE) and reliable 6.22% validation MAPE. Transparent spreadsheet backup and cross-check.<br />
+                  <strong>Limitation:</strong> Lags sudden demand level jumps without differencing.
                 </p>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
                 <span className="font-bold text-sky-400">Random Forest Trade-Off:</span>
                 <p className="text-slate-300 leading-relaxed">
-                  <strong>Advantage:</strong> Non-linear decision trees.<br />
-                  <strong>Limitation:</strong> Overfits small $N=30$ series; collapsed to 11.19% MAPE because trees cannot extrapolate outside bounds.
+                  <strong>Advantage:</strong> Non-linear ensemble capturing multi-lag interactions.<br />
+                  <strong>Limitation:</strong> Averages training values; cannot extrapolate above historical training range, finishing behind four conventional methods (8.31% MAPE).
                 </p>
               </div>
             </div>
@@ -525,7 +537,7 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                 B. Conventional Forecasting
               </h4>
               <p className="text-xs text-slate-200 leading-relaxed">
-                <strong>1–5 Summary:</strong> 3-Period WMA ($0.50, 0.30, 0.20$) outperformed SMA and Trend with a 9.31% development MAPE and 40,168 RMSE (with ES α=0.50 achieving 8.92% MAPE). Trend projection failed because the Feb 2023 shock created a negative slope (-2,216 TEUs/month), which falsely predicted declining volumes during late 2024's strong surge. Group 7 locked in their conventional baseline in Part V prior to seeing validation data.
+                <strong>1–5 Summary:</strong> Across months 1 to 30, Exponential Smoothing with α=0.50 achieved the lowest development error across all conventional methods (MAE 30,596 TEUs, RMSE 38,534 TEUs, MAPE 8.80%), while 3-Period WMA delivered 32,142 MAE (9.31% MAPE). Trend projection had the worst fit (MAE 35,201, MAPE 10.12%, r = -0.39) because the Feb 2023 shock tilted the trend line rigidly downward (-2,216 TEUs/month), making it an operational hazard. Group 7 officially locked ETS α=0.50 as the conventional baseline prior to receiving validation data.
               </p>
             </div>
 
@@ -535,7 +547,7 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                 C. Validation & Evaluation Metrics
               </h4>
               <p className="text-xs text-slate-200 leading-relaxed">
-                <strong>1–4 Summary:</strong> On the unseen 6 validation months (July–Dec 2024), WMA delivered a solid 6.41% MAPE, while Random Forest struggled at 11.19% and Trend collapsed to 24.15%. All 6 metrics show complementary value: MAE shows physical container error (~28,473 TEUs), RMSE penalizes large misses, and positive MPE (+4.12%) proves a safe, conservative under-forecast bias.
+                <strong>1–4 Summary:</strong> On the unseen 6 validation months (July–Dec 2024), actual export volumes stepped up to an average of 445,111 TEUs (+18.0% level shift). ARIMA (1,1,0) won decisively across all six evaluated metrics (MAE 20,919 TEUs, RMSE 24,426 TEUs, MAPE 4.71%, SMAPE 4.82%, MPE +2.43%). Random Forest landed at 8.31% MAPE (MAE 37,138 TEUs) behind four conventional methods, and Trend collapsed to 24.15% (MAE 107,737 TEUs). Positive MPE (+2.43% for ARIMA, +4.93% for ETS α=0.50) indicates slight under-forecasting bias, justifying a ~5% flexible capacity buffer.
               </p>
             </div>
 
@@ -545,7 +557,7 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                 D. Python-Assisted Forecasting
               </h4>
               <p className="text-xs text-slate-200 leading-relaxed">
-                <strong>1–5 Summary:</strong> ARIMA order $(1,1,1)$ was selected via lowest AIC on training data, modeling first-order differencing and autoregression. Random Forest failed to beat WMA because tree ensembles cannot extrapolate values above their training maximum ($466k$) on small sample sizes ($N=30$).
+                <strong>1–5 Summary:</strong> ARIMA order $(1,1,0)$ was selected via lowest AIC (701.43) on training data, modeling first-order differencing and autoregression. Random Forest (100 trees) failed to beat conventional smoothing because tree ensembles average historical training targets and cannot extrapolate above their in-sample maximum on small time series ($N=30$).
               </p>
             </div>
 
@@ -555,7 +567,7 @@ export const ManualAndWorkbookViewer: React.FC<ManualAndWorkbookViewerProps> = (
                 E. Final Model Comparison & OM Decision
               </h4>
               <p className="text-xs text-slate-200 leading-relaxed">
-                <strong>Recommendation:</strong> Deploy <strong>3-Period WMA ($0.50, 0.30, 0.20$)</strong> for standard operations management. While ARIMA achieved slightly lower numerical MAPE (5.46% vs 6.41%), WMA is completely transparent, auditable by port supervisors without software dependencies, and avoids black-box calculation failures.
+                <strong>Recommendation:</strong> Deploy <strong>ARIMA (1,1,0)</strong> as the primary one-month-ahead forecast for berth scheduling and labor allocations, rolling forward monthly. To safeguard against demurrage penalties, hold a <strong>~5% flexible capacity buffer</strong> (matching ARIMA's 4.7% error, scalable to 10%). Maintain <strong>ETS α=0.50</strong> as a transparent spreadsheet backup and cross-check. Conduct quarterly reviews, triggering an immediate re-audit if 3-month rolling MAPE exceeds 6.2%.
               </p>
             </div>
 

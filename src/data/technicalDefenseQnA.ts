@@ -74,18 +74,18 @@ export const TECHNICAL_DEFENSE_QUESTIONS: DefenseQuestion[] = [
   {
     id: "q-4",
     category: "Conventional Methods",
-    question: "Why did Exponential Smoothing with α=0.5 outperform α=0.2 in development, yet WMA was still preferred?",
-    targetedConcept: "Smoothing Parameter Responsiveness",
+    question: "Why was Exponential Smoothing with α=0.50 selected as the conventional OM baseline, and how did it compare with other candidates?",
+    targetedConcept: "Smoothing Parameter Responsiveness & Baseline Selection",
     shortBulletSummary: [
-      "Moderate alpha (0.50) assigns 50% weight to the latest observation, quickly adjusting after the Feb 2023 dip (Dev MAPE: 9.19%).",
-      "Low alpha (0.20) heavily dampens and smoothed through the rebound, producing a 9.94% MAPE.",
-      "WMA was preferred because its fixed 0.50/0.30/0.20 memory avoids bullwhip amplification in longshore labor ordering.",
-      "WMA achieves 9.31% development MAPE and superior 6.41% out-of-sample validation generalization."
+      "ETS α = 0.50 achieved the lowest error across all development metrics (MAE 30,596 TEUs, RMSE 38,534 TEUs, MAPE 8.80%, SMAPE 8.46%).",
+      "Moderate alpha (0.50) perfectly balanced responsiveness and stability: α=0.20 reacted too slowly to the 2022 decline and Feb 2023 shock (MAE 32,093, MAPE 9.49%), while α=0.80 chased monthly noise (MAE 32,183, MAPE 9.26%).",
+      "3-Period WMA (0.50/0.30/0.20) was also evaluated, achieving 32,142 dev MAE (9.31% MAPE), but ETS α=0.50 was mathematically superior in development.",
+      "During out-of-sample validation, ETS α=0.50 delivered 6.22% MAPE (27,725 MAE), serving as our reliable spreadsheet backup and cross-check."
     ],
-    detailedDefenseScript: "In our development stage across Months 1-30, Exponential Smoothing with α=0.5 achieved a MAPE of 9.19% and RMSE of 39,582 TEUs, superior to α=0.2 which yielded 9.94% and 45,413 RMSE. Because our dataset features a sharp 32% drop followed by recovery, moderate responsiveness was necessary. 3-Period WMA (0.50, 0.30, 0.20) delivered a balanced 9.31% development MAPE and went on to deliver the best conventional validation accuracy of 6.41% MAPE while maintaining predictable longshore gang staffing requisitions.",
+    detailedDefenseScript: "In our development stage across Months 1-30, Exponential Smoothing with α=0.50 achieved the lowest error across every single criterion: MAE of 30,596 TEUs, RMSE of 38,534 TEUs, MAPE of 8.80%, and SMAPE of 8.46%. In comparison, α=0.20 reacted too sluggishly to shifts (MAE 32,093, MAPE 9.49%), while α=0.80 chased erratic monthly noise (MAE 32,183, MAPE 9.26%). While 3-Period WMA achieved 32,142 dev MAE and 6.41% validation MAPE, Group 7 locked ETS α=0.50 as the conventional baseline prior to receiving validation data. In validation, ETS α=0.50 proved highly reliable at 6.22% MAPE, which is why we retain it as our spreadsheet cross-check against ARIMA.",
     keyFormulas: [
       "F_t = F_{t-1} + α(A_{t-1} - F_{t-1})",
-      "Dev WMA MAPE = 9.31% | Dev WMA RMSE = 40,168 TEUs"
+      "Dev ETS α=0.50 MAE = 30,596 TEUs | Dev MAPE = 8.80% | Val MAPE = 6.22%"
     ],
     rubricCriterion: "Part IV & V: Conventional Baseline Selection (15 pts)"
   },
@@ -115,11 +115,11 @@ export const TECHNICAL_DEFENSE_QUESTIONS: DefenseQuestion[] = [
     shortBulletSummary: [
       "MAE: Average absolute error in physical TEU containers (intuitive for yard planners).",
       "RMSE: Penalizes large outliers heavily due to squared terms (vital for berth capacity bottlenecks).",
-      "MAPE: Scale-independent percentage error (6.41% for WMA vs 11.19% for RF vs 24.15% for Trend).",
+      "MAPE: Scale-independent percentage error (4.71% for ARIMA vs 6.22% for ETS α=0.50 vs 8.31% for RF vs 24.15% for Trend).",
       "SMAPE: Symmetric metric bounded between 0-200% that treats over- and under-forecasts equally.",
       "MPE: Crucial directional bias indicator! Positive MPE means under-forecasting; negative means over-forecasting."
     ],
-    detailedDefenseScript: "Each metric provides a distinct industrial engineering perspective. MAE tells the terminal manager that our WMA is off by an average of 28,473 TEUs. RMSE squares errors (32,962 TEUs for WMA), penalizing catastrophic misses that could cause port gridlock. MAPE gives executive leadership a clear 6.41% error benchmark. SMAPE guarantees mathematical symmetry near zero. Most importantly, MPE reveals directional bias: our WMA had an MPE of +4.12%, indicating a healthy slight under-forecast (safety cushion), whereas Trend Projection suffered an MPE of +24.15% because its negative slope projected 331k while actual was 460k.",
+    detailedDefenseScript: "Each metric provides a distinct industrial engineering perspective. MAE tells the terminal manager that ARIMA is off by an average of 20,919 TEUs (and ETS α=0.50 by 27,725 TEUs). RMSE squares errors (24,426 TEUs for ARIMA), penalizing catastrophic misses that could cause port gridlock. MAPE gives executive leadership a clear 4.71% error benchmark. SMAPE guarantees mathematical symmetry near zero (4.82% for ARIMA). Most importantly, MPE reveals directional bias: ARIMA had an MPE of +2.43% and ETS α=0.50 had +4.93%, indicating a slight under-forecast bias, which is why management should hold a ~5% flexible buffer. Trend Projection suffered an MPE of +24.15% because its negative slope projected 331k while actual was 460k.",
     keyFormulas: [
       "MAE = (1/n) Σ |A_t - F_t|",
       "RMSE = sqrt[ (1/n) Σ (A_t - F_t)^2 ]",
@@ -138,9 +138,9 @@ export const TECHNICAL_DEFENSE_QUESTIONS: DefenseQuestion[] = [
       "Small sample size: Only 30 training observations (N=30) is insufficient for tree-based ensemble learning.",
       "Extrapolation bound: Decision trees cannot predict values higher or lower than the training target bounds.",
       "Overfitting: RF learned in-sample noise rather than generalizable autoregressive dynamics.",
-      "Validation MAPE of 11.19% was far worse than WMA (6.41%), proving Occam's Razor in OM."
+      "Validation MAPE of 8.31% was worse than four conventional methods (ARIMA: 4.71%, ETS 0.80: 5.17%, ETS 0.50: 6.22%, WMA: 6.41%)."
     ],
-    detailedDefenseScript: "Random Forest Regression failed because of a fundamental mathematical limitation of tree-based models: decision trees cannot extrapolate beyond the maximum and minimum values encountered during training. In a 36-month monthly time series, we only had 30 training observations. Furthermore, Random Forest splits data on orthogonal feature thresholds, causing it to memorize idiosyncratic monthly spikes rather than smooth temporal momentum. When confronted with the unseen late 2024 validation surge (460,304 TEUs), it plateaued near historical training medians (~398,000 TEUs), producing an 11.19% MAPE and an RMSE of 51,065 TEUs.",
+    detailedDefenseScript: "Random Forest Regression failed because of a fundamental mathematical limitation of tree-based models: decision trees cannot extrapolate beyond the maximum and minimum values encountered during training. In a 36-month monthly time series, we only had 30 training observations. Furthermore, Random Forest splits data on orthogonal feature thresholds, causing it to memorize idiosyncratic monthly spikes rather than smooth temporal momentum. When confronted with the unseen late 2024 validation surge (460,304 TEUs), it plateaued near historical training medians (~398,000 TEUs), producing an 8.31% MAPE and an RMSE of 42,988 TEUs (MAE 37,138 TEUs), landing behind four conventional methods.",
     keyFormulas: [
       "Tree Prediction: y_hat = (1/B) Σ T_b(x)",
       "Extrapolation limit: min(y_train) <= y_hat <= max(y_train)"

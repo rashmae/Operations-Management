@@ -51,7 +51,7 @@ export const TechnicalDefenseSimulator: React.FC<TechnicalDefenseSimulatorProps>
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-sky-400">
             <Shield className="w-4 h-4" />
-            <span>10-MINUTE TECHNICAL DEFENSE DRILL · GROUP 4</span>
+            <span>10-MINUTE TECHNICAL DEFENSE DRILL · GROUP 7</span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-white mt-1">
             D10 Technical Defense & Random Member Caller

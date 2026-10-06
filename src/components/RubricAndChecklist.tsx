@@ -62,7 +62,7 @@ export const RubricAndChecklist: React.FC = () => {
     {
       criterion: "Statistical & Machine Learning Rigor",
       weight: 10,
-      evidence: "Proper chronological train/validation split (Months 1-30 vs 31-36, no shuffle), ARIMA(1,1,1), lagged regression, and diagnosis of Random Forest overfitting on small samples.",
+      evidence: "Proper chronological train/validation split (Months 1-30 vs 31-36, no shuffle), ARIMA(1,1,0), lagged regression, and diagnosis of Random Forest overfitting on small samples.",
       status: "Excellent (4/4)"
     },
     {

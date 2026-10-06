@@ -5,13 +5,25 @@ import {
 } from 'lucide-react';
 import { TEAM_MEMBERS, TeamMember, BaselineModelChoice } from '../data/forecastingData';
 import { getPresentationBeats, SlideBeat, TOTAL_PRESENTATION_SECONDS } from '../data/presentationSlides';
+import { exportPrintableDeck, downloadOfficialPPTX } from '../utils/exportPresentation';
+
+// Authoritative mascot image assets for Group 7
+const MASCOT_BLUE = '/src/assets/images/mascot_blue_analyst_1791196865420.jpg';
+const MASCOT_ORANGE = '/src/assets/images/mascot_orange_planner_1791196885029.jpg';
+const MASCOT_GREEN = '/src/assets/images/mascot_green_validator_1791196903349.jpg';
+
+const MASCOT_MAP: Record<string, string> = {
+  "Aligato, Elaiza Jane": MASCOT_BLUE,
+  "Ansay, Rash Mae Crystelle C.": MASCOT_ORANGE,
+  "Villagracia, Mylene Joy": MASCOT_GREEN,
+};
 
 interface SpeakerNotesViewerProps {
   selectedBaseline?: BaselineModelChoice;
 }
 
 export const SpeakerNotesViewer: React.FC<SpeakerNotesViewerProps> = ({
-  selectedBaseline = 'wma3'
+  selectedBaseline = 'es05'
 }) => {
   const [selectedMemberName, setSelectedMemberName] = useState<string>(TEAM_MEMBERS[0].name);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
@@ -60,41 +72,43 @@ export const SpeakerNotesViewer: React.FC<SpeakerNotesViewerProps> = ({
             <span>INDIVIDUAL SPEAKING TIME AUDIT & REHEARSAL SUITE · GROUP 7</span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-white mt-1">
-            Equal Group 7 Speech Allocation (Exactly 70 Seconds Each)
+            Equal Group 7 Speech Allocation (~70–100 Seconds Each · 4:30 Total)
           </h2>
           <p className="text-xs md:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-            Per Engr. Baclayon's rubric: <em>"Every member needs to speak for an equal amount of time during the 3–5 minute presentation."</em> Total runtime is 210 seconds (3 minutes 30 seconds), divided into exactly three 70-second acts across all 3 members of Group 7.
+            Per Engr. Baclayon's rubric: <em>"Every member needs to speak for an equal amount of time during the 3–5 minute presentation."</em> Total presentation runtime is 270 seconds (4 minutes 30 seconds) across 7 keynote beats, precisely structured for the 3 specialists of Group 7.
           </p>
         </div>
 
         {/* Stopwatch & Speed Tracker */}
-        <div className="flex items-center gap-4 bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
-          <div className="text-right">
-            <div className="text-[10px] text-slate-400 font-mono uppercase">Rehearsal Stopwatch</div>
-            <div className="text-2xl font-black font-mono text-sky-400">
-              {formatTimer(timerSeconds)}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
+            <div className="text-right">
+              <div className="text-[10px] text-slate-400 font-mono uppercase">Rehearsal Stopwatch</div>
+              <div className="text-2xl font-black font-mono text-sky-400">
+                {formatTimer(timerSeconds)}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setIsTimerRunning(!isTimerRunning)}
-              className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                isTimerRunning 
-                  ? 'bg-amber-500 text-slate-950' 
-                  : 'bg-[#1B6CA8] hover:bg-sky-500 text-white'
-              }`}
-            >
-              {isTimerRunning ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
-            </button>
-            <button
-              onClick={() => {
-                setIsTimerRunning(false);
-                setTimerSeconds(0);
-              }}
-              className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-900 border border-slate-800 transition-colors"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsTimerRunning(!isTimerRunning)}
+                className={`p-2 rounded-xl text-xs font-bold transition-all ${
+                  isTimerRunning 
+                    ? 'bg-amber-500 text-slate-950' 
+                    : 'bg-[#1B6CA8] hover:bg-sky-500 text-white'
+                }`}
+              >
+                {isTimerRunning ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+              </button>
+              <button
+                onClick={() => {
+                  setIsTimerRunning(false);
+                  setTimerSeconds(0);
+                }}
+                className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-900 border border-slate-800 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -118,10 +132,14 @@ export const SpeakerNotesViewer: React.FC<SpeakerNotesViewerProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${
-                  isSelected ? 'bg-sky-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-300 font-bold'
+                <div className={`w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border-2 ${
+                  isSelected ? 'border-sky-400 shadow-md ring-2 ring-sky-400/40' : 'border-slate-700 bg-slate-900'
                 }`}>
-                  {member.initials}
+                  <img 
+                    src={MASCOT_MAP[member.name] || MASCOT_BLUE} 
+                    alt={member.name} 
+                    className="w-full h-full object-contain p-0.5"
+                  />
                 </div>
                 <div className="overflow-hidden">
                   <div className="text-sm font-bold text-white truncate">{member.name}</div>
@@ -137,33 +155,73 @@ export const SpeakerNotesViewer: React.FC<SpeakerNotesViewerProps> = ({
       {/* Active Speaker Deep Dive Panel */}
       <div className="bg-[#0B2545]/90 border border-[#1B6CA8]/50 rounded-2xl p-6 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono uppercase text-sky-400 font-bold">{activeMember.role}</span>
-              <span className="text-slate-600">·</span>
-              <span className="text-xs text-slate-300 font-mono">{activeMember.timeAllotment} ({memberTotalDuration}s total)</span>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-sky-400 shadow-lg bg-slate-900 p-1 flex-shrink-0">
+              <img 
+                src={MASCOT_MAP[activeMember.name] || MASCOT_BLUE} 
+                alt={activeMember.name} 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <h3 className="text-xl font-bold text-white mt-0.5">
-              {activeMember.name}
-            </h3>
-            <p className="text-xs text-slate-300 mt-1">
-              Topic Focus: <span className="text-sky-300 font-medium">{activeMember.topic}</span>
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono uppercase text-sky-400 font-bold">{activeMember.role}</span>
+                <span className="text-slate-600">·</span>
+                <span className="text-xs text-slate-300 font-mono">{activeMember.timeAllotment} ({memberTotalDuration}s total)</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mt-0.5">
+                {activeMember.name}
+              </h3>
+              <p className="text-xs text-slate-300 mt-1">
+                Topic Focus: <span className="text-sky-300 font-medium">{activeMember.topic}</span>
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={downloadOfficialPPTX}
+              className="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-colors"
+              title="Download Genuine PowerPoint Presentation (.pptx)"
+            >
+              <span className="font-mono text-[9px] font-black bg-orange-950/60 px-1 py-0.5 rounded text-orange-200">PPTX</span>
+              <span>Download Slides</span>
+            </button>
+            <button
+              onClick={exportPrintableDeck}
+              className="px-3.5 py-1.5 rounded-xl bg-[#1B6CA8] hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-colors"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>PDF Deck</span>
+            </button>
             <button
               onClick={handleCopyScript}
               className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-medium text-slate-200 flex items-center gap-2 transition-colors"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Copied to Clipboard' : 'Copy All Cues'}</span>
+              <span>{copied ? 'Copied' : 'Copy Script'}</span>
             </button>
           </div>
         </div>
 
         {/* Assigned Beats List */}
         <div className="space-y-4">
+          {/* Team Introduction Prompt (Beat 0) */}
+          {presentationBeats[0] && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+              <div className="flex items-center justify-between text-xs font-mono text-amber-300">
+                <span className="font-bold flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-[#F2A541]" />
+                  <span>PROLOGUE: ALL-TEAM INTRODUCTION (Slide 1 · 25s)</span>
+                </span>
+                <span className="text-slate-400">Team Opening Script</span>
+              </div>
+              <p className="text-xs md:text-sm text-slate-200 italic font-sans leading-relaxed">
+                "{presentationBeats[0].liveSpeakerPrompt}"
+              </p>
+            </div>
+          )}
+
           <div className="text-xs font-mono uppercase tracking-wider text-slate-400">
             Assigned Slide Beats ({memberBeats.length} beats):
           </div>

@@ -6,23 +6,36 @@
 import React, { useState } from 'react';
 import { Header, AppTab } from './components/Header';
 import { VideoPresentationPlayer } from './components/VideoPresentationPlayer';
+import { Morph3DStudioSection } from './components/Morph3DStudioSection';
 import { MotionFXStudio } from './components/MotionFXStudio';
 import { ManualAndWorkbookViewer } from './components/ManualAndWorkbookViewer';
 import { TechnicalDefenseSimulator } from './components/TechnicalDefenseSimulator';
 import { DataAndCodeInspector } from './components/DataAndCodeInspector';
 import { SpeakerNotesViewer } from './components/SpeakerNotesViewer';
 import { RubricAndChecklist } from './components/RubricAndChecklist';
-import { Calendar, Clock, MapPin, Users, Award, Play, Sparkles, BookOpen, SlidersHorizontal } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Award, Play, Sparkles, BookOpen, SlidersHorizontal, Download, Box } from 'lucide-react';
 import { BaselineModelChoice, BASELINE_MODELS } from './data/forecastingData';
+import { ExportPresentationModal } from './components/ExportPresentationModal';
+import { generateNativePPTX } from './utils/pptxExport';
+import { downloadOfficialPPTX } from './utils/exportPresentation';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('presentation');
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [selectedBaseline, setSelectedBaseline] = useState<BaselineModelChoice>('wma3');
+  const [selectedBaseline, setSelectedBaseline] = useState<BaselineModelChoice>('es05');
+  const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
 
   const handleLaunchPresentation = () => {
     setActiveTab('presentation');
     setIsPlaying(prev => !prev);
+  };
+
+  const handleHeaderDownloadPPTX = async () => {
+    try {
+      await generateNativePPTX();
+    } catch {
+      downloadOfficialPPTX();
+    }
   };
 
   const activeModelConfig = BASELINE_MODELS[selectedBaseline] || BASELINE_MODELS.wma3;
@@ -37,6 +50,8 @@ export default function App() {
         isPlaying={isPlaying}
         selectedBaseline={selectedBaseline}
         onSelectBaseline={setSelectedBaseline}
+        onExportPresentation={() => setIsExportOpen(true)}
+        onDownloadPPTX={handleHeaderDownloadPPTX}
       />
 
       {/* Main Container */}
@@ -69,6 +84,13 @@ export default function App() {
               <span className="text-emerald-400">({activeModelConfig.valMAPE.toFixed(2)}% Val MAPE)</span>
             </div>
             <button
+              onClick={() => setActiveTab('morph3d')}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 text-[11px] font-bold hover:bg-amber-500/25 transition-colors"
+            >
+              <Box className="w-3 h-3 text-amber-400" />
+              <span>3D Morph Studio</span>
+            </button>
+            <button
               onClick={() => setActiveTab('motion')}
               className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30 text-[11px] font-semibold hover:bg-sky-500/25 transition-colors"
             >
@@ -85,7 +107,16 @@ export default function App() {
             setIsPlaying={setIsPlaying}
             selectedBaseline={selectedBaseline}
             onSelectBaseline={setSelectedBaseline}
+            onOpen3DStudio={() => {
+              setIsPlaying(false);
+              setActiveTab('morph3d');
+            }}
           />
+        )}
+
+        {/* Tab: 3D Spatial & Mathematical Morph Studio */}
+        {activeTab === 'morph3d' && (
+          <Morph3DStudioSection />
         )}
 
         {/* Tab 2: Motion FX Studio (Flourish, Napkin, Jitter) */}
@@ -128,6 +159,12 @@ export default function App() {
           <RubricAndChecklist />
         )}
       </main>
+
+      {/* Export Presentation Modal */}
+      <ExportPresentationModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+      />
 
       {/* Clean Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-6 px-4 md:px-8 text-xs text-slate-500 mt-12">

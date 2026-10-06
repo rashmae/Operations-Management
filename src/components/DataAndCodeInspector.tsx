@@ -187,8 +187,8 @@ export const DataAndCodeInspector: React.FC<DataAndCodeInspectorProps> = ({
     };
 
     const metricsList: ModelMetrics[] = [
+      computeMetrics(r => r.arima!, "ARIMA (1,1,0)", "Statistical", "Most accurate model across all error criteria; first-differencing adapts to 2024 level shift.", "Requires Python execution; short lead time requires prompt monthly re-estimation.", "High"),
       computeMetrics(r => r.wma3!, "3-Period WMA (0.50, 0.30, 0.20)", "Conventional", "Fast momentum adaptation without lag. Simple for spreadsheet execution.", "Requires recent historical continuity; cannot anticipate exogenous labor strikes.", "Low"),
-      computeMetrics(r => r.arima!, "ARIMA (1,1,1)", "Statistical", "Accounts for autocorrelation and differenced stationarity across quarterly shifts.", "High mathematical complexity; sensitive to abrupt shocks like the Feb 2023 dip.", "High"),
       computeMetrics(r => r.sma3!, "3-Period SMA", "Conventional", "Universally understood; zero parameter tuning needed.", "Heavy lag behind sharp post-peak seasonal shifts and recoveries.", "Low"),
       computeMetrics(r => r.laggedLr!, "Lagged Linear Regression (t-1, t-2, t-3)", "Statistical", "Statistically weighted lag features provide multi-period linear projection.", "Weights fixed by in-sample normal equations; slower to catch sudden rebounds.", "Moderate"),
       computeMetrics(r => r.randomForest!, "Random Forest Regression", "Machine Learning", "Zero assumptions of linearity; fits complex non-linear nuances.", "Overfits small-sample time series (N=30); cannot extrapolate trends beyond bounds.", "High"),
@@ -199,9 +199,11 @@ export const DataAndCodeInspector: React.FC<DataAndCodeInspectorProps> = ({
     metricsList.sort((m1, m2) => m1.mape - m2.mape);
     metricsList.forEach((m, idx) => {
       m.validationRank = idx + 1;
+      if (m.name.includes("ARIMA")) {
+        m.isRecommended = true;
+      }
       if (m.name.includes("WMA")) {
         m.isBaseline = true;
-        m.isRecommended = true;
       }
     });
 
@@ -297,7 +299,7 @@ export const DataAndCodeInspector: React.FC<DataAndCodeInspectorProps> = ({
 
   // Copy full table formatted for Google Sheets (TSV)
   const copyGoogleSheetsTSV = () => {
-    const headers = "Period\tDate\tMonth\tActual TEU\tSMA3\tWMA3 (0.5/0.3/0.2)\tTrend Projection\tARIMA (1,1,1)\tLagged LR\tRandom Forest\tValidation Stage\n";
+    const headers = "Period\tDate\tMonth\tActual TEU\tSMA3\tWMA3 (0.5/0.3/0.2)\tTrend Projection\tARIMA (1,1,0)\tLagged LR\tRandom Forest\tValidation Stage\n";
     const rows = computedData.series.map(r => 
       `${r.period}\t${r.date}\t${r.monthName}\t${r.actual}\t${r.sma3 ?? ''}\t${r.wma3 ?? ''}\t${r.trend ?? ''}\t${r.arima ?? ''}\t${r.laggedLr ?? ''}\t${r.randomForest ?? ''}\t${r.isValidation ? 'Validation' : 'Development'}`
     ).join('\n');
@@ -411,8 +413,8 @@ for actual_val in y_val.values:
     wma_preds.append(pred)
     history.append(actual_val)
 
-# 5. ARIMA (1,1,1) MODELING
-arima_model = ARIMA(y_train, order=(1, 1, 1)).fit()
+# 5. ARIMA (1,1,0) MODELING
+arima_model = ARIMA(y_train, order=(1, 1, 0)).fit()
 arima_preds = arima_model.forecast(steps=6)
 
 # 6. FEATURE ENGINEERING FOR LAGGED LINEAR REGRESSION & RANDOM FOREST
@@ -437,9 +439,9 @@ rf_preds = rf.predict(X_val_lag)
 
 # 7. GENERATE SCORECARD COMPARING ALL MODELS
 results = {
+    'ARIMA (1,1,0) [Winner]': calculate_metrics(y_val, arima_preds),
     '3-Period WMA (Baseline)': calculate_metrics(y_val, wma_preds),
     'Lagged Linear Regression': calculate_metrics(y_val, lr_preds),
-    'ARIMA (1,1,1)': calculate_metrics(y_val, arima_preds),
     'Random Forest Regressor': calculate_metrics(y_val, rf_preds),
 }
 scorecard = pd.DataFrame(results).T.round(2)
@@ -466,7 +468,7 @@ print(scorecard)
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-sky-400">
             <Database className="w-4 h-4" />
-            <span>DATA INTEGRITY & GOOGLE SHEETS WORKBOOK · GROUP 4</span>
+            <span>DATA INTEGRITY & GOOGLE SHEETS WORKBOOK · GROUP 7</span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-white mt-1">
             Port of Los Angeles Export Dataset & Validation Engine
@@ -943,9 +945,9 @@ print(scorecard)
                 </div>
                 <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-1">
                   <div>Formula: <code>F_t = F_{'{'}t-1{'}'} + alpha * (A_{'{'}t-1{'}'} - F_{'{'}t-1{'}'})</code></div>
-                  <div className="text-slate-300">Alpha 0.20 Dev MAPE: 9.94% (Heavily lagged behind recovery)</div>
-                  <div className="text-slate-300">Alpha 0.50 Dev MAPE: 9.19% (Balanced but sensitive to structural shock)</div>
-                  <div className="text-slate-300">Alpha 0.80 Dev MAPE: 9.66% (Erratic noise amplification)</div>
+                  <div className="text-slate-300">Alpha 0.20 Dev MAPE: 9.49% (MAE: 32,093 · RMSE: 44,080 · Lagged)</div>
+                  <div className="text-slate-300">Alpha 0.50 Dev MAPE: 8.80% (Lowest dev error: 30,596 MAE · 38,534 RMSE ★)</div>
+                  <div className="text-slate-300">Alpha 0.80 Dev MAPE: 9.26% (MAE: 32,183 · RMSE: 39,050 · Chases noise)</div>
                 </div>
               </div>
             )}
@@ -956,7 +958,7 @@ print(scorecard)
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <div>
                     <h4 className="text-base font-bold text-white">Sheet 06: Linear Trend Projection (Normal Equations)</h4>
-                    <p className="text-xs text-slate-300">Least-squares regression fitted strictly on in-sample Periods 1 to 30</p>
+                    <p className="text-xs text-slate-300">Least-squares regression fitted strictly on in-sample Periods 1 to 30 (r = -0.39)</p>
                   </div>
                   <span className="text-xs font-mono px-2.5 py-1 rounded bg-red-500/20 text-red-300 border border-red-500/30">
                     24.15% Validation Error
@@ -965,7 +967,7 @@ print(scorecard)
                 <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 font-mono text-xs space-y-1.5">
                   <div className="text-sky-300 font-bold">Trend Equation: y_t = 411,620.96 - 2,216.33 × t</div>
                   <div className="text-slate-400">Sum X = 465 | Sum Y = 11,202,933.80 | Sum XY = 169,044,383.15 | Sum X^2 = 9,455</div>
-                  <div className="text-slate-400">Slope b = -2,216.33 TEUs/period | Intercept a = 411,620.96 TEUs</div>
+                  <div className="text-slate-400">Slope b = -2,216.33 TEUs/period | Intercept a = 411,620.96 TEUs | Correlation r = -0.39</div>
                   <div className="text-red-400 font-bold">Month 36 (Dec 2024) Trend Forecast = 331,833.08 TEUs vs Actual = 460,304.25 TEUs (Error: -128,471 TEUs)</div>
                 </div>
               </div>
@@ -984,7 +986,7 @@ print(scorecard)
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Before receiving the 6 validation observations, Group 7 audited all contenders. Both <strong>3-Period WMA</strong> (9.31% MAPE, 40,168 RMSE) and <strong>Exponential Smoothing (α=0.50)</strong> (8.92% MAPE, 38,241 RMSE) proved vastly superior to linear trend (r=0.06) and avoided bullwhip swings, providing robust conventional baselines.
+                  Before receiving the 6 validation observations, Group 7 audited all contenders. Both <strong>3-Period WMA</strong> (9.31% MAPE, 40,168 RMSE, 32,142 MAE) and <strong>Exponential Smoothing (α=0.50)</strong> (8.80% MAPE, 38,534 RMSE, 30,596 MAE) proved vastly superior to linear trend (r = -0.39, 10.12% MAPE) and avoided bullwhip swings, providing robust conventional baselines.
                 </p>
               </div>
             )}
@@ -1002,7 +1004,7 @@ print(scorecard)
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  On the unseen future, 3-Period WMA delivered a <strong>6.41% MAPE</strong>, far outperforming Random Forest (11.19%) and Linear Trend (24.15%).
+                  On the unseen future, ARIMA (1,1,0) led all models with an extraordinary <strong>4.71% MAPE</strong>, followed by ETS α=0.50 at <strong>6.22%</strong> and 3-Period WMA at <strong>6.41%</strong>, far outperforming Random Forest (8.31%) and Linear Trend (24.15%).
                 </p>
               </div>
             )}
@@ -1130,11 +1132,11 @@ print(scorecard)
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-                <span className="text-[11px] font-mono text-slate-400">ARIMA (1,1,1) Validation MAPE:</span>
+                <span className="text-[11px] font-mono text-slate-400">ARIMA (1,1,0) Validation MAPE:</span>
                 <div className="font-mono font-bold text-sky-400 text-sm">
                   {computedData.metricsList.find(m => m.name.includes("ARIMA"))?.mape.toFixed(2)}%
                 </div>
-                <span className="text-[10px] text-slate-400">Autoregressive first difference</span>
+                <span className="text-[10px] text-slate-400">Autoregressive first difference (Lowest AIC: 701.43)</span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
@@ -1237,7 +1239,7 @@ print(scorecard)
                     <th className="py-2.5 px-3 text-sky-300">3-Period WMA</th>
                     <th className="py-2.5 px-3">3-Period SMA</th>
                     <th className="py-2.5 px-3">Linear Trend</th>
-                    <th className="py-2.5 px-3">ARIMA (1,1,1)</th>
+                    <th className="py-2.5 px-3 text-sky-400 font-bold">ARIMA (1,1,0)</th>
                     <th className="py-2.5 px-3">Stage</th>
                   </tr>
                 </thead>
@@ -1333,7 +1335,7 @@ print(scorecard)
                     <th className="py-3 px-4 text-sky-300 font-bold">WMA (0.5/0.3/0.2)</th>
                     <th className="py-3 px-4">SMA (3-Mo)</th>
                     <th className="py-3 px-4">Linear Trend</th>
-                    <th className="py-3 px-4">ARIMA (1,1,1)</th>
+                    <th className="py-3 px-4 text-sky-400 font-bold">ARIMA (1,1,0)</th>
                     <th className="py-3 px-4">Lagged LR</th>
                     <th className="py-3 px-4">Random Forest</th>
                   </tr>

@@ -1,347 +1,277 @@
 /**
- * "D10: The Forecasting Challenge" — Port of Los Angeles Monthly Total TEUs
- * Narrative Infographic Video Presentation Structure & Spoken Cues
- * Complete 12-Beat Documentary Arc strictly aligned with Group 7's Model Selection Record & Google Sheets data
+ * "The Forecast: Port of Los Angeles Monthly Export Volume (TEUs)"
+ * Applied Study 1: Real-Data Forecasting Decision Challenge
+ * IE-PC 3112: Operations Management 1 · BSIE 3-E · Group 7 · Cebu Technological University
  * 
- * Target Duration: 210 seconds (3 minutes 30 seconds) — strictly within 3-4 minutes
- * Tone: Corporate, cinematic, credible maritime trade briefing
- * 3 Group 7 Members equally distributed (70 seconds each!)
- *   1. Aligato, Elaiza Jane (0:00 – 1:10)
- *   2. Ansay, Rash Mae Crystelle C. (Leader) (1:10 – 2:20)
- *   3. Villagracia, Mylene Joy (2:20 – 3:30)
+ * Apple Product-Launch Keynote Presentation Flow
+ * Total Presentation Runtime: 4 minutes 30 seconds (270s) — exactly within the 4-5 minute limit!
+ * 7 Major Keynote Beats:
+ *   Beat 0 — 25s: Prologue — "Meet Group 7" (Section D10 Forecasters Spotlight)
+ *   Beat 1 — 40s: Operational Problem, Real Dataset & Data Behavior
+ *   Beat 2 — 35s: Conventional Forecasting Results
+ *   Beat 3 — 30s: Conventional OM Baseline Selection (ETS α=0.50)
+ *   Beat 4 — 40s: ARIMA + Machine Learning Challengers
+ *   Beat 5 — 55s: Final Validation Comparison (All 6 Metrics)
+ *   Beat 6 — 45s: Operations Management Recommendation + Limitations + Human Oversight
  */
 
-import { BaselineModelChoice, BASELINE_MODELS } from './forecastingData';
+import { BaselineModelChoice } from './forecastingData';
 
-export type VisualMode =
-  | 'hook_intro'
-  | 'stakes_counter'
-  | 'trend_anomaly'
-  | 'contenders_race'
-  | 'round_one_verdict'
-  | 'ml_challengers'
-  | 'blind_test_reveal'
-  | 'amber_plot_twist'
-  | 'level_shift_bars'
-  | 'om_recommendation_control_room'
-  | 'limitations_oversight'
-  | 'closing_recommendation';
-
-export interface SlideBeat {
+export interface KeynoteBeat {
   id: string;
+  beatNumber: number;
   slideNumber: number;
-  act: 1 | 2 | 3;
-  actTitle: string;
+  title: string;
   beatTitle: string;
+  actTitle: string;
+  flowSection: string;
   durationSeconds: number;
-  cumulativeStartTime: number;
+  cumulativeStartSeconds: number;
   speaker: string;
   speakerRole: string;
   speakerInitials: string;
-  backgroundImage: string;
-  themeColor: 'steel' | 'navy' | 'amber'; // amber reserved strictly for Plot Twist & Closing Recommendation
-  onScreenStoryCaptions: string[]; // 3-6 words per line max, used sparingly
-  liveSpeakerPrompt: string; // What the student says over this beat during live presentation
+  livePresenterPrompt: string;
+  liveSpeakerPrompt: string;
+  onScreenStoryCaptions: string[];
   dataHighlight?: string;
-  visualMode: VisualMode;
+  keyMetric?: {
+    label: string;
+    value: string;
+    sublabel?: string;
+  };
 }
 
-export function getPresentationBeats(baseline: BaselineModelChoice = 'wma3'): SlideBeat[] {
-  const modelConfig = BASELINE_MODELS[baseline] || BASELINE_MODELS.wma3;
-  const isWMA = baseline === 'wma3';
-
-  return [
-    // ==================== ACT 1: THE CHALLENGE (70 SECONDS) ====================
-    // Speaker 1: Aligato, Elaiza Jane (0:00 – 1:10)
-    {
-      id: "beat-1",
-      slideNumber: 1,
-      act: 1,
-      actTitle: "Act I: The Challenge",
-      beatTitle: "The Maritime Trade Hook",
-      durationSeconds: 8,
-      cumulativeStartTime: 0,
-      speaker: "Aligato, Elaiza Jane",
-      speakerRole: "Speaker 1",
-      speakerInitials: "EA",
-      backgroundImage: "/src/assets/images/cargo_ship_breakwater_1791024998811.jpg",
-      themeColor: "steel",
-      onScreenStoryCaptions: [
-        "Every month, thousands of containers leave this port.",
-        "How many will leave next month?",
-        "D10: The Forecasting Challenge"
-      ],
-      liveSpeakerPrompt: "Good day, Engr. Baclayon and colleagues. At the Port of Los Angeles, America's leading maritime gateway, every terminal decision depends on one critical question: how many container TEUs will cross the docks next month?",
-      visualMode: "hook_intro"
-    },
-    {
-      id: "beat-2",
-      slideNumber: 2,
-      act: 1,
-      actTitle: "Act I: The Challenge",
-      beatTitle: "The Operational Stakes",
-      durationSeconds: 17,
-      cumulativeStartTime: 8,
-      speaker: "Aligato, Elaiza Jane",
-      speakerRole: "Speaker 1",
-      speakerInitials: "EA",
-      backgroundImage: "/src/assets/images/pola_container_terminal_1791024986178.jpg",
-      themeColor: "steel",
-      dataHighlight: "36 Months of Real Data (TEUs)",
-      onScreenStoryCaptions: [
-        "36 Months of Real Data (TEUs).",
-        "Capacity planning hangs on this.",
-        "Labor gangs committed 24 hours ahead.",
-        "Berth scheduling cannot fail."
-      ],
-      liveSpeakerPrompt: "We analyzed 36 consecutive months of verified operational container throughput from January 2022 to December 2024. Longshore labor gangs, crane berths, and yard stacking equipment must be committed days before a vessel enters the channel.",
-      visualMode: "stakes_counter"
-    },
-    {
-      id: "beat-3",
-      slideNumber: 3,
-      act: 1,
-      actTitle: "Act I: The Challenge",
-      beatTitle: "The Plot Complication (Anomaly)",
-      durationSeconds: 20,
-      cumulativeStartTime: 25,
-      speaker: "Aligato, Elaiza Jane",
-      speakerRole: "Speaker 1",
-      speakerInitials: "EA",
-      backgroundImage: "/src/assets/images/container_yard_twilight_1791025012665.jpg",
-      themeColor: "steel",
-      dataHighlight: "Feb 2023 Shock: 236,264 TEUs (-32.0%)",
-      onScreenStoryCaptions: [
-        "Then, without warning...",
-        "Feb 2023: 236,264 TEUs.",
-        "A 32% sudden structural dip.",
-        "Demand visibly defies straight linearity."
-      ],
-      liveSpeakerPrompt: "Drawing the first 30 months reveals reality: in February 2023, export volume crashed to 236,264 TEUs—the lowest point in our development data, triggered by post-pandemic inventory corrections and ILWU contract talks. Linear correlation is near zero at r equals 0.06.",
-      visualMode: "trend_anomaly"
-    },
-    {
-      id: "beat-4",
-      slideNumber: 4,
-      act: 1,
-      actTitle: "Act I: The Challenge",
-      beatTitle: "The Four Conventional Contenders",
-      durationSeconds: 25,
-      cumulativeStartTime: 45,
-      speaker: "Aligato, Elaiza Jane",
-      speakerRole: "Speaker 1",
-      speakerInitials: "EA",
-      backgroundImage: "/src/assets/images/pola_container_terminal_1791024986178.jpg",
-      themeColor: "steel",
-      onScreenStoryCaptions: [
-        "Four conventional contenders tested.",
-        "SMA lags behind quarterly shifts.",
-        "WMA weights recent momentum (0.50/0.30/0.20).",
-        "Exponential Smoothing alphas race ahead.",
-        "Trend Projection fails the dip."
-      ],
-      liveSpeakerPrompt: "We tested four classical Operations Management contenders: 3-Period SMA, 3-Period WMA, Exponential Smoothing with alphas 0.20, 0.50, and 0.80, and Trend Projection. Linear Trend collapsed immediately because the data possesses no sustained slope.",
-      visualMode: "contenders_race"
-    },
-
-    // ==================== ACT 2: THE TRIAL (70 SECONDS) ====================
-    // Speaker 2: Ansay, Rash Mae Crystelle C. (1:10 – 2:20)
-    {
-      id: "beat-5",
-      slideNumber: 5,
-      act: 2,
-      actTitle: "Act II: The Trial",
-      beatTitle: "The Verdict - Round One (Baseline Selection)",
-      durationSeconds: 16,
-      cumulativeStartTime: 70,
-      speaker: "Ansay, Rash Mae Crystelle C.",
-      speakerRole: "Group Leader / Speaker 2",
-      speakerInitials: "RA",
-      backgroundImage: "/src/assets/images/operations_analytics_command_1790930073715.jpg",
-      themeColor: "steel",
-      dataHighlight: modelConfig.beat5Highlight,
-      onScreenStoryCaptions: isWMA ? [
-        "Verdict: 3-Period WMA Selected.",
-        "Dev MAPE: 9.31% | RMSE: 40,168 TEUs.",
-        "Trend ruled out: r = 0.06.",
-        "Optimal balance of velocity & stability."
-      ] : [
-        "Verdict: ETS α = 0.50 Selected.",
-        "Lowest Dev MAE: 30,595.71 TEUs.",
-        "Trend ruled out: r = 0.06.",
-        "Optimal balance of responsiveness & stability."
-      ],
-      liveSpeakerPrompt: isWMA 
-        ? "Based strictly on in-sample development evidence across Months 1 to 30, Group 7 selected 3-Period Weighted Moving Average with weights 0.50, 0.30, and 0.20. It produced a robust 9.31% development MAPE and 40,168 RMSE, balancing immediate cargo momentum without chasing erratic noise."
-        : "Based strictly on in-sample development evidence across Months 1 to 30, Group 7 selected Exponential Smoothing with alpha 0.50. It produced the lowest development MAE of 30,595.71 TEUs, perfectly balancing responsiveness to cargo shifts without chasing erratic noise.",
-      visualMode: "round_one_verdict"
-    },
-    {
-      id: "beat-6",
-      slideNumber: 6,
-      act: 2,
-      actTitle: "Act II: The Trial",
-      beatTitle: "The Statistical & Machine Learning Challengers",
-      durationSeconds: 22,
-      cumulativeStartTime: 86,
-      speaker: "Ansay, Rash Mae Crystelle C.",
-      speakerRole: "Group Leader / Speaker 2",
-      speakerInitials: "RA",
-      backgroundImage: "/src/assets/images/cargo_ship_breakwater_1791024998811.jpg",
-      themeColor: "steel",
-      onScreenStoryCaptions: [
-        "Can algorithms beat simple conventional OM?",
-        "ARIMA: Autoregressive integrated order (1,1,1).",
-        "Lagged Linear Regression: 3 lag features.",
-        "Random Forest: Non-linear decision trees.",
-        "Tested independently in parallel."
-      ],
-      liveSpeakerPrompt: "Next, we deployed three computational challengers in parallel: ARIMA 1-1-1 to capture differenced stationarity, Lagged Linear Regression with three lag features, and Random Forest Regression with 100 decision trees. Could advanced machine learning outperform our conventional OM baseline?",
-      visualMode: "ml_challengers"
-    },
-    {
-      id: "beat-7",
-      slideNumber: 7,
-      act: 2,
-      actTitle: "Act II: The Trial",
-      beatTitle: "The Reveal (The 6-Month Blind Test)",
-      durationSeconds: 16,
-      cumulativeStartTime: 108,
-      speaker: "Ansay, Rash Mae Crystelle C.",
-      speakerRole: "Group Leader / Speaker 2",
-      speakerInitials: "RA",
-      backgroundImage: "/src/assets/images/container_yard_twilight_1791025012665.jpg",
-      themeColor: "steel",
-      dataHighlight: "Held-Out Truth: July to December 2024",
-      onScreenStoryCaptions: [
-        "Then the hidden months were revealed...",
-        "July to December 2024.",
-        "Actual volume surged to 460,304 TEUs.",
-        "All forecasts tested simultaneously."
-      ],
-      liveSpeakerPrompt: "Then the six hidden validation months were unveiled: July through December 2024. Export demand staged a powerful recovery, climbing to 460,304 TEUs. All models were tested blind against real-world observations.",
-      visualMode: "blind_test_reveal"
-    },
-    {
-      id: "beat-8",
-      slideNumber: 8,
-      act: 2,
-      actTitle: "Act II: The Trial",
-      beatTitle: "The Plot Twist: Simplicity Prevails",
-      durationSeconds: 16,
-      cumulativeStartTime: 124,
-      speaker: "Ansay, Rash Mae Crystelle C.",
-      speakerRole: "Group Leader / Speaker 2",
-      speakerInitials: "RA",
-      backgroundImage: "/src/assets/images/container_yard_twilight_1791025012665.jpg",
-      themeColor: "amber", // AMBER ACCENT COLOR UNLOCKED!
-      dataHighlight: modelConfig.beat8Highlight,
-      onScreenStoryCaptions: [
-        "The algorithm overfitted.",
-        "Simplicity prevailed.",
-        `${modelConfig.shortName}: ${modelConfig.valMAPE.toFixed(2)}% MAPE.`,
-        "Random Forest collapsed to 11.19%."
-      ],
-      liveSpeakerPrompt: `Here is the critical plot twist: Random Forest overfitted to training noise, plateauing near 398,000 TEUs and collapsing to 11.19% error. Linear Trend failed at 24.15%. Meanwhile, our selected baseline ${modelConfig.shortName} delivered an exceptional ${modelConfig.valMAPE.toFixed(2)}% validation MAPE!`,
-      visualMode: "amber_plot_twist"
-    },
-
-    // ==================== ACT 3: THE LESSON (70 SECONDS) ====================
-    // Speaker 3: Villagracia, Mylene Joy (2:20 – 3:30)
-    {
-      id: "beat-9",
-      slideNumber: 9,
-      act: 3,
-      actTitle: "Act III: The Lesson",
-      beatTitle: "Why It Happened: The Level Shift",
-      durationSeconds: 18,
-      cumulativeStartTime: 140,
-      speaker: "Villagracia, Mylene Joy",
-      speakerRole: "Speaker 3",
-      speakerInitials: "MV",
-      backgroundImage: "/src/assets/images/container_yard_twilight_1791025012665.jpg",
-      themeColor: "steel",
-      dataHighlight: "Level Shift: 373,431 → 445,126 TEUs (+19.2%)",
-      onScreenStoryCaptions: [
-        "Development Average: 373,431 TEUs.",
-        "Validation Average: 445,126 TEUs.",
-        "Demand didn't stay the same.",
-        "The forecast had to adapt."
-      ],
-      liveSpeakerPrompt: "Why did this happen? Port export demand underwent a structural level shift: average monthly volume surged from 373,431 TEUs during development to 445,126 TEUs during validation—a 19.2% jump. Static linear models broke; our adaptive baseline tracked the surge seamlessly.",
-      visualMode: "level_shift_bars"
-    },
-    {
-      id: "beat-10",
-      slideNumber: 10,
-      act: 3,
-      actTitle: "Act III: The Lesson",
-      beatTitle: "The OM Recommendation: Control Room Action",
-      durationSeconds: 20,
-      cumulativeStartTime: 158,
-      speaker: "Villagracia, Mylene Joy",
-      speakerRole: "Speaker 3",
-      speakerInitials: "MV",
-      backgroundImage: "/src/assets/images/port_control_planner_1791028044582.jpg",
-      themeColor: "steel",
-      dataHighlight: `Recommended Action: ${modelConfig.shortName} + 7% Buffer`,
-      onScreenStoryCaptions: [
-        "Recommended Operational Action:",
-        `Deploy ${modelConfig.shortName} for berth allocation.`,
-        "Maintain a 7% surge contingency buffer.",
-        "Prevents 22,500 misplaced containers monthly."
-      ],
-      liveSpeakerPrompt: `Our operational recommendation for terminal dispatchers: schedule crane shifts and longshore gangs using ${modelConfig.name}, reinforced by a 7% dynamic capacity buffer to absorb unexpected vessel surges without berth dwell delays.`,
-      visualMode: "om_recommendation_control_room"
-    },
-    {
-      id: "beat-11",
-      slideNumber: 11,
-      act: 3,
-      actTitle: "Act III: The Lesson",
-      beatTitle: "Limitations, Honestly",
-      durationSeconds: 18,
-      cumulativeStartTime: 178,
-      speaker: "Villagracia, Mylene Joy",
-      speakerRole: "Speaker 3",
-      speakerInitials: "MV",
-      backgroundImage: "/src/assets/images/industrial_engineers_team_1790930090538.jpg",
-      themeColor: "steel",
-      onScreenStoryCaptions: [
-        "When does human judgment override?",
-        "ILWU labor contract votes.",
-        "Red Sea maritime chokepoint diversions.",
-        "Data predicts the tide. Humans steer."
-      ],
-      liveSpeakerPrompt: "Yet we acknowledge the model's limitations honestly. No statistical formula can foresee ILWU labor contract walkouts, Red Sea maritime diversions, or tariff deadlines. Data predicts the tide; human industrial engineers steer the ship.",
-      visualMode: "limitations_oversight"
-    },
-    {
-      id: "beat-12",
-      slideNumber: 12,
-      act: 3,
-      actTitle: "Act III: The Lesson",
-      beatTitle: "Closing & Final Recommendation",
-      durationSeconds: 14,
-      cumulativeStartTime: 196,
-      speaker: "Villagracia, Mylene Joy",
-      speakerRole: "Speaker 3",
-      speakerInitials: "MV",
-      backgroundImage: "/src/assets/images/cargo_ship_breakwater_1791024998811.jpg",
-      themeColor: "amber", // AMBER ACCENT COLOR UNLOCKED!
-      dataHighlight: "Final Group Decision",
-      onScreenStoryCaptions: [
-        "Final Recommendation:",
-        `Deploy ${modelConfig.shortName} for standard port planning.`,
-        "Enforce human override during external shocks.",
-        "Group 7 · BSIE 3-E · Cebu Tech"
-      ],
-      liveSpeakerPrompt: `Our final recommendation: ${modelConfig.recommendationQuote} Thank you.`,
-      visualMode: "closing_recommendation"
+export const KEYNOTE_BEATS: KeynoteBeat[] = [
+  // =========================================================================
+  // BEAT 0 (0:00 - 0:25 · 25s) — PROLOGUE: MEET GROUP 7 (THE FORECASTERS)
+  // =========================================================================
+  {
+    id: "beat-0",
+    beatNumber: 0,
+    slideNumber: 1,
+    title: "Prologue: Meet Group 7",
+    beatTitle: "Meet Group 7 · Operations Forecasters",
+    actTitle: "Prologue: The Forecasters",
+    flowSection: "Prologue: Meet Group 7 (BSIE 3-E · Section D10)",
+    durationSeconds: 25,
+    cumulativeStartSeconds: 0,
+    speaker: "Group 7 Forecasters",
+    speakerRole: "Team Presentation Intro",
+    speakerInitials: "G7",
+    livePresenterPrompt: "Good day, Engr. Lyndrian Shalom Baclayon and esteemed evaluators. We are Group 7 from Section D10, BSIE 3-E. Our presentation tackles Applied Study 1: the Port of Los Angeles Monthly Export Forecasting Challenge. Our team unites three specialized operational perspectives: Elaiza Jane Aligato, our Lead Analyst and Time-Series Specialist, decoding signals and seasonality; Rash Mae Crystelle Ansay, our Port Operations and Logistics Planner, aligning forecast volumes to dock capacity, berth allocations, and container yard staging; and Mylene Joy Villagracia, our Validation and Machine Learning Engineer, rigorously stress-testing model error across blind holdout horizons. Together, we are Group 7 — turning 36 months of real maritime export data into high-confidence terminal operations.",
+    liveSpeakerPrompt: "Good day, Engr. Lyndrian Shalom Baclayon and esteemed evaluators. We are Group 7 from Section D10, BSIE 3-E. Our presentation tackles Applied Study 1: the Port of Los Angeles Monthly Export Forecasting Challenge. Our team unites three specialized operational perspectives: Elaiza Jane Aligato, our Lead Analyst and Time-Series Specialist, decoding signals and seasonality; Rash Mae Crystelle Ansay, our Port Operations and Logistics Planner, aligning forecast volumes to dock capacity, berth allocations, and container yard staging; and Mylene Joy Villagracia, our Validation and Machine Learning Engineer, rigorously stress-testing model error across blind holdout horizons. Together, we are Group 7 — turning 36 months of real maritime export data into high-confidence terminal operations.",
+    onScreenStoryCaptions: [
+      "MEET GROUP 7",
+      "THE FORECASTERS",
+      "SECTION D10 · BSIE 3-E",
+      "DATA → OPERATIONS"
+    ],
+    dataHighlight: "Group 7 (Section D10) · 3 Specialists",
+    keyMetric: {
+      label: "Group 7 Lineup",
+      value: "3 Specialists",
+      sublabel: "BSIE 3-E · Section D10 · CTU Main"
     }
-  ];
-}
+  },
 
-export const PRESENTATION_BEATS: SlideBeat[] = getPresentationBeats('wma3');
+  // =========================================================================
+  // BEAT 1 (0:25 - 1:05 · 40s) — THE OPERATIONAL PROBLEM + REAL DATA + BEHAVIOR
+  // =========================================================================
+  {
+    id: "beat-1",
+    beatNumber: 1,
+    slideNumber: 2,
+    title: "Operational Problem & Data Behavior",
+    beatTitle: "Operational Problem & Data Behavior",
+    actTitle: "Act I: Real World to Data",
+    flowSection: "Operational Problem, Real Dataset & Data Behavior",
+    durationSeconds: 40,
+    cumulativeStartSeconds: 25,
+    speaker: "Aligato, Elaiza Jane",
+    speakerRole: "Lead Analyst · Speaker 1",
+    speakerInitials: "EA",
+    livePresenterPrompt: "At the Port of Los Angeles, America's leading maritime gateway, every terminal decision depends on one critical question: how many container TEUs will cross the docks next month? We analyzed 36 consecutive months of verified operational export volume from January 2022 to December 2024. In February 2023, volume unexpectedly plummeted to 236,264 TEUs — the lowest month in the entire dataset. A straight line fitted to months 1 to 30 slopes downward by about 2,216 TEUs a month, with a correlation of only r = -0.39. It describes the 2022 decline and nothing that came after. With high volatility and no steady trend, terminal operations cannot plan on a straight line.",
+    liveSpeakerPrompt: "At the Port of Los Angeles, America's leading maritime gateway, every terminal decision depends on one critical question: how many container TEUs will cross the docks next month? We analyzed 36 consecutive months of verified operational export volume from January 2022 to December 2024. In February 2023, volume unexpectedly plummeted to 236,264 TEUs — the lowest month in the entire dataset. A straight line fitted to months 1 to 30 slopes downward by about 2,216 TEUs a month, with a correlation of only r = -0.39. It describes the 2022 decline and nothing that came after. With high volatility and no steady trend, terminal operations cannot plan on a straight line.",
+    onScreenStoryCaptions: [
+      "36 MONTHS",
+      "ONE QUESTION",
+      "FEB 2023: 236,264 TEUs",
+      "r = −0.39 (NO TREND)"
+    ],
+    dataHighlight: "36 Months Verified TEUs · r = −0.39 · Slope: −2,216 TEUs/mo",
+    keyMetric: {
+      label: "Trend Correlation",
+      value: "r = −0.39",
+      sublabel: "Slopes -2,216 TEUs/mo · No steady trend"
+    }
+  },
 
-export const TOTAL_PRESENTATION_SECONDS = 210; // 3 minutes 30 seconds
+  // =========================================================================
+  // BEAT 2 (1:05 - 1:40 · 35s) — CONVENTIONAL FORECASTING RESULTS
+  // =========================================================================
+  {
+    id: "beat-2",
+    beatNumber: 2,
+    slideNumber: 3,
+    title: "Conventional Forecasting Results",
+    beatTitle: "Conventional Forecasting Results",
+    actTitle: "Act I: Conventional OM Trajectories",
+    flowSection: "Conventional Forecasting Results (Periods 1–30)",
+    durationSeconds: 35,
+    cumulativeStartSeconds: 65,
+    speaker: "Aligato, Elaiza Jane",
+    speakerRole: "Lead Analyst · Speaker 1",
+    speakerInitials: "EA",
+    livePresenterPrompt: "To support berth allocation and labor gang requisitions, we evaluated four conventional Operations Management methods across the 30 development months. First, a 3-Period Simple Moving Average with MAE 33,428. Second, a 3-Period Weighted Moving Average with weights 0.50, 0.30, and 0.20 achieving MAE 32,142. Third, Exponential Smoothing tested across alphas 0.20, 0.50, and 0.80 — where alpha 0.50 delivered the lowest error at MAE 30,596 and 8.80% MAPE. Finally, Trend Projection at MAE 35,201. The four approaches interpret the same irregular data in distinct ways: while the actual series oscillates wildly, the trend line slopes rigidly downward.",
+    liveSpeakerPrompt: "To support berth allocation and labor gang requisitions, we evaluated four conventional Operations Management methods across the 30 development months. First, a 3-Period Simple Moving Average with MAE 33,428. Second, a 3-Period Weighted Moving Average with weights 0.50, 0.30, and 0.20 achieving MAE 32,142. Third, Exponential Smoothing tested across alphas 0.20, 0.50, and 0.80 — where alpha 0.50 delivered the lowest error at MAE 30,596 and 8.80% MAPE. Finally, Trend Projection at MAE 35,201. The four approaches interpret the same irregular data in distinct ways: while the actual series oscillates wildly, the trend line slopes rigidly downward.",
+    onScreenStoryCaptions: [
+      "SMA (3-Period · 33,428 MAE)",
+      "WMA (0.50/0.30/0.20 · 32,142 MAE)",
+      "ETS (α=0.50 · 30,596 MAE ★)",
+      "TREND (35,201 MAE · r = −0.39)"
+    ],
+    dataHighlight: "4 Conventional Contenders · ETS α=0.50 Leads (MAE 30,596)",
+    keyMetric: {
+      label: "Conventional Field",
+      value: "4 MODELS",
+      sublabel: "ETS α=0.50 lowest dev MAE (30,596 TEUs)"
+    }
+  },
+
+  // =========================================================================
+  // BEAT 3 (1:40 - 2:10 · 30s) — CONVENTIONAL OM BASELINE SELECTION
+  // =========================================================================
+  {
+    id: "beat-3",
+    beatNumber: 3,
+    slideNumber: 4,
+    title: "Conventional OM Baseline Selection",
+    beatTitle: "Conventional OM Baseline Selection",
+    actTitle: "Act II: Pre-Validation Commitment",
+    flowSection: "Conventional OM Baseline Selection Before Validation",
+    durationSeconds: 30,
+    cumulativeStartSeconds: 100,
+    speaker: "Ansay, Rash Mae Crystelle C.",
+    speakerRole: "Port Operations Planner · Speaker 2",
+    speakerInitials: "RA",
+    livePresenterPrompt: "Before our group evaluated the six validation months, we officially locked our conventional OM baseline using development data only. We selected Exponential Smoothing with alpha = 0.50. Across months 1 to 30, ETS alpha 0.50 delivered the lowest error across MAE (30,596 TEUs), RMSE (38,534 TEUs), MAPE (8.80%), and SMAPE (8.46%). A mid-range constant balanced the failure modes: alpha 0.20 reacted too slowly to shifts like the 2022 decline, while alpha 0.80 chased monthly noise. Please note: this was our locked conventional baseline — not yet the final validation winner.",
+    liveSpeakerPrompt: "Before our group evaluated the six validation months, we officially locked our conventional OM baseline using development data only. We selected Exponential Smoothing with alpha = 0.50. Across months 1 to 30, ETS alpha 0.50 delivered the lowest error across MAE (30,596 TEUs), RMSE (38,534 TEUs), MAPE (8.80%), and SMAPE (8.46%). A mid-range constant balanced the failure modes: alpha 0.20 reacted too slowly to shifts like the 2022 decline, while alpha 0.80 chased monthly noise. Please note: this was our locked conventional baseline — not yet the final validation winner.",
+    onScreenStoryCaptions: [
+      "THE BASELINE",
+      "ETS α = 0.50",
+      "MAE: 30,596 · MAPE: 8.80%",
+      "LOCKED PRE-VALIDATION"
+    ],
+    dataHighlight: "Locked Pre-Validation Baseline: ETS α = 0.50",
+    keyMetric: {
+      label: "Locked Baseline",
+      value: "ETS α = 0.50",
+      sublabel: "30,596 Dev MAE · 8.80% Dev MAPE"
+    }
+  },
+
+  // =========================================================================
+  // BEAT 4 (2:10 - 2:50 · 40s) — ARIMA + MACHINE LEARNING CHALLENGERS
+  // =========================================================================
+  {
+    id: "beat-4",
+    beatNumber: 4,
+    slideNumber: 5,
+    title: "ARIMA + Machine Learning Challengers",
+    beatTitle: "ARIMA + Machine Learning Challengers",
+    actTitle: "Act II: Advanced Algorithmic Contenders",
+    flowSection: "Statistical & Machine Learning Results (Periods 31–36)",
+    durationSeconds: 40,
+    cumulativeStartSeconds: 130,
+    speaker: "Ansay, Rash Mae Crystelle C.",
+    speakerRole: "Port Operations Planner · Speaker 2",
+    speakerInitials: "RA",
+    livePresenterPrompt: "We now pit our conventional baseline against advanced competitors. First, an ARIMA model with order (1, 1, 0), which achieved the lowest AIC of 701.43 among six candidates. It differences once for stationarity and takes last month's actual with a slight pullback. Next, machine learning: Lagged Linear Regression with an intercept of 136,697 and lag weights summing to only 0.63, pulling forecasts to about 365,000 TEUs. And Random Forest with 100 trees, which averages in-sample history. On small, shifting macroeconomic series, can machine learning beat parsimonious statistics? The question is: which one wins?",
+    liveSpeakerPrompt: "We now pit our conventional baseline against advanced competitors. First, an ARIMA model with order (1, 1, 0), which achieved the lowest AIC of 701.43 among six candidates. It differences once for stationarity and takes last month's actual with a slight pullback. Next, machine learning: Lagged Linear Regression with an intercept of 136,697 and lag weights summing to only 0.63, pulling forecasts to about 365,000 TEUs. And Random Forest with 100 trees, which averages in-sample history. On small, shifting macroeconomic series, can machine learning beat parsimonious statistics? The question is: which one wins?",
+    onScreenStoryCaptions: [
+      "ARIMA (1,1,0) · AIC: 701.43",
+      "LAGGED REGRESSION (Lags 1–3)",
+      "RANDOM FOREST (100 Trees)",
+      "WHICH ONE WINS?"
+    ],
+    dataHighlight: "Statistical vs Machine Learning Contenders",
+    keyMetric: {
+      label: "Contenders",
+      value: "3 CLASSES",
+      sublabel: "Conventional vs ARIMA (1,1,0) vs Machine Learning"
+    }
+  },
+
+  // =========================================================================
+  // BEAT 5 (2:50 - 3:45 · 55s) — FINAL VALIDATION COMPARISON (ALL 6 METRICS)
+  // =========================================================================
+  {
+    id: "beat-5",
+    beatNumber: 5,
+    slideNumber: 6,
+    title: "Final Validation Comparison",
+    beatTitle: "Final Validation Comparison",
+    actTitle: "Act III: The Arena & Decisive Evidence",
+    flowSection: "Model Comparison & Validation Results Across All 6 Metrics",
+    durationSeconds: 55,
+    cumulativeStartSeconds: 170,
+    speaker: "Villagracia, Mylene Joy",
+    speakerRole: "ML & Validation Engineer · Speaker 3",
+    speakerInitials: "MV",
+    livePresenterPrompt: "Here is the ultimate test: periods 31 through 36, held out as blind operational validation. In the final six months volume stepped up to an average of 445,111 TEUs — 18.0% above development. Ranking models strictly by MAE, the verdict is definitive: ARIMA (1,1,0) achieved an extraordinary MAE of 20,919 TEUs and a MAPE of 4.71% — outperforming every other model across all six evaluated metrics. It cut average error by 25% against our conventional baseline ETS alpha 0.50 (MAE 27,725). Both machine learning models finished behind four conventional methods, with Random Forest landing at 37,138 MAE and 8.31% MAPE. Simpler statistical structure decisively adapted best.",
+    liveSpeakerPrompt: "Here is the ultimate test: periods 31 through 36, held out as blind operational validation. In the final six months volume stepped up to an average of 445,111 TEUs — 18.0% above development. Ranking models strictly by MAE, the verdict is definitive: ARIMA (1,1,0) achieved an extraordinary MAE of 20,919 TEUs and a MAPE of 4.71% — outperforming every other model across all six evaluated metrics. It cut average error by 25% against our conventional baseline ETS alpha 0.50 (MAE 27,725). Both machine learning models finished behind four conventional methods, with Random Forest landing at 37,138 MAE and 8.31% MAPE. Simpler statistical structure decisively adapted best.",
+    onScreenStoryCaptions: [
+      "VALIDATION: 31–36",
+      "20,919 MAE · 4.71% MAPE",
+      "24,426 RMSE · 4.82% SMAPE",
+      "ARIMA WINS DECISIVELY"
+    ],
+    dataHighlight: "ARIMA (1,1,0) Wins Validation: 20,919 MAE · 4.71% MAPE",
+    keyMetric: {
+      label: "Winning Model",
+      value: "ARIMA (1,1,0)",
+      sublabel: "20,919 MAE · 4.71% MAPE · Lowest on all 6 metrics"
+    }
+  },
+
+  // =========================================================================
+  // BEAT 6 (3:45 - 4:30 · 45s) — OPERATIONS MANAGEMENT RECOMMENDATION
+  // =========================================================================
+  {
+    id: "beat-6",
+    beatNumber: 6,
+    slideNumber: 7,
+    title: "Operations Management Recommendation",
+    beatTitle: "Operations Management Recommendation",
+    actTitle: "Act III: Operational Action, Buffer & Oversight",
+    flowSection: "Operations Management Recommendation + Limitations + Human Oversight",
+    durationSeconds: 45,
+    cumulativeStartSeconds: 225,
+    speaker: "Villagracia, Mylene Joy",
+    speakerRole: "ML & Validation Engineer · Speaker 3",
+    speakerInitials: "MV",
+    livePresenterPrompt: "How does this translate into operations management? We recommend ARIMA (1,1,0) as our primary one-month-ahead forecast for labor rosters, berth allocation, and equipment staging. Because every model under-forecasted on average, management should commit firm resources to the forecast and hold roughly a 5% flexible capacity buffer above it — matching ARIMA's 4.7% error — with an escalation route to 10%. Second, keep ETS alpha 0.50 running as a spreadsheet backup and cross-check. Third, log actuals and review quarterly, triggering an early review if 3-month rolling MAPE exceeds 6.2%. Finally, Industry 5.0: keep human sign-off on every binding capacity commitment. USE ARIMA (1,1,0). REVALIDATE QUARTERLY. HUMAN REVIEW.",
+    liveSpeakerPrompt: "How does this translate into operations management? We recommend ARIMA (1,1,0) as our primary one-month-ahead forecast for labor rosters, berth allocation, and equipment staging. Because every model under-forecasted on average, management should commit firm resources to the forecast and hold roughly a 5% flexible capacity buffer above it — matching ARIMA's 4.7% error — with an escalation route to 10%. Second, keep ETS alpha 0.50 running as a spreadsheet backup and cross-check. Third, log actuals and review quarterly, triggering an early review if 3-month rolling MAPE exceeds 6.2%. Finally, Industry 5.0: keep human sign-off on every binding capacity commitment. USE ARIMA (1,1,0). REVALIDATE QUARTERLY. HUMAN REVIEW.",
+    onScreenStoryCaptions: [
+      "USE ARIMA (1,1,0)",
+      "HOLD ~5% FLEXIBLE BUFFER",
+      "ETS α = 0.50 BACKUP",
+      "HUMAN SIGN-OFF"
+    ],
+    dataHighlight: "ARIMA (1,1,0) Primary · +5% Buffer · ETS Backup · Human Sign-off",
+    keyMetric: {
+      label: "Final Policy",
+      value: "USE ARIMA (1,1,0)",
+      sublabel: "+5% Buffer · ETS Backup · Revalidate Quarterly"
+    }
+  }
+];
+
+export const TOTAL_KEYNOTE_SECONDS = KEYNOTE_BEATS.reduce((sum, b) => sum + b.durationSeconds, 0); // Exactly 270s = 4m 30s!
+
+// Compatibility exports
+export type SlideBeat = KeynoteBeat;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getPresentationBeats = (_baseline?: BaselineModelChoice) => KEYNOTE_BEATS;
+export const PRESENTATION_BEATS = KEYNOTE_BEATS;
+export const TOTAL_PRESENTATION_SECONDS = TOTAL_KEYNOTE_SECONDS;
