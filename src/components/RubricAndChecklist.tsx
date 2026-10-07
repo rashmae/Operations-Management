@@ -74,7 +74,7 @@ export const RubricAndChecklist: React.FC = () => {
     {
       criterion: "Presentation and Defense Quality",
       weight: 10,
-      evidence: "Strict compliance with 3-5 minute presentation limit; equal speaking distribution across all 3 members (70s each); crisp technical defense against random questions.",
+      evidence: "Strict compliance with 3-5 minute presentation limit (4:30 total); balanced speaking distribution across all 3 members (75s–100s each); crisp technical defense against random questions.",
       status: "Excellent (4/4)"
     }
   ];

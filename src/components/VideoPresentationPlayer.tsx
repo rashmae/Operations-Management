@@ -331,12 +331,12 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
   }, [currentBeatIndex, beatElapsedSeconds]);
 
   return (
-    <div className="flex flex-col gap-4 w-full">
-      {/* Full Screen Steady 16:9 Cinema Keynote Stage */}
+    <div className="w-full h-full flex flex-col relative overflow-hidden">
+      {/* Full Screen Steady Cinema Keynote Stage */}
       <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
-        className={`relative w-full aspect-video bg-[#060B14] rounded-2xl overflow-hidden shadow-2xl border border-slate-900 select-none flex items-center justify-center transition-all ${
+        className={`relative w-full h-full bg-[#060B14] overflow-hidden select-none flex items-center justify-center transition-all ${
           isFullscreen ? '!fixed !inset-0 !z-50 !w-screen !h-screen !max-w-none !rounded-none !border-none !aspect-auto bg-[#060B14]' : ''
         }`}
       >
@@ -348,49 +348,6 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
           }}
         />
 
-        {/* Top-Right Action Controls (PPTX, Video & PDF) */}
-        <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
-          {/* Download Real PPTX */}
-          <button
-            onClick={handleDownloadPPTX}
-            disabled={isGeneratingPPTX}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600/90 hover:bg-orange-500 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-lg group disabled:opacity-50"
-            title="Download Real Microsoft PowerPoint Presentation (.pptx)"
-          >
-            <span className="font-mono text-[10px] font-black bg-orange-950/60 px-1 py-0.5 rounded text-orange-200">PPTX</span>
-            <span>{isGeneratingPPTX ? 'Generating...' : 'Download PPTX'}</span>
-          </button>
-
-          {/* Download Real MP4 Video */}
-          <button
-            onClick={handleDownloadVideoMP4}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-[#F2A541] hover:text-slate-950 text-amber-300 border border-amber-500/40 text-xs font-semibold backdrop-blur-md transition-all shadow-lg group active:scale-95"
-            title="Download Real 1080p Keynote Video (.mp4)"
-          >
-            <Video className="w-3.5 h-3.5 text-amber-400 group-hover:text-slate-950" />
-            <span>Download Video (.mp4)</span>
-          </button>
-
-          {/* Export Slides PDF */}
-          <button
-            onClick={handleExportSlides}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#1B6CA8]/30 hover:bg-[#1B6CA8] hover:text-white text-sky-300 border border-[#1B6CA8]/50 text-xs font-semibold backdrop-blur-md transition-all shadow-lg hidden sm:flex"
-            title="Export Slide Deck (Save as PDF)"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>PDF</span>
-          </button>
-
-          {/* More Export Options */}
-          <button
-            onClick={() => setIsExportOpen(true)}
-            className="p-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition-colors"
-            title="Open Export Suite"
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
         {/* Floating Notification Toast */}
         <AnimatePresence>
           {videoNotification && (
@@ -398,36 +355,13 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-16 right-4 z-50 px-4 py-2 bg-emerald-950/90 border border-emerald-500 text-emerald-200 text-xs font-semibold rounded-xl shadow-2xl flex items-center gap-2 backdrop-blur-md"
+              className="absolute top-6 right-6 z-50 px-4 py-2 bg-emerald-950/90 border border-emerald-500 text-emerald-200 text-xs font-semibold rounded-xl shadow-2xl flex items-center gap-2 backdrop-blur-md"
             >
               <Check className="w-4 h-4 text-emerald-400" />
               <span>{videoNotification}</span>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Top-Left: Full Screen Steady Presentation Control */}
-        <div className="absolute top-4 left-4 z-40 flex items-center gap-2">
-          <button
-            onClick={toggleFullscreen}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-md transition-all shadow-lg active:scale-95 border ${
-              isFullscreen
-                ? 'bg-[#F2A541] text-slate-950 border-amber-300 shadow-amber-500/30'
-                : 'bg-sky-600/90 hover:bg-sky-500 text-white border-sky-400/40 shadow-sky-950/50'
-            }`}
-            title="Toggle Full Screen Steady Presentation View (F)"
-          >
-            {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
-            <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen Steady'}</span>
-          </button>
-
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-950/85 border border-slate-800 backdrop-blur-md text-[11px] text-slate-300 font-mono shadow-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <span className="font-semibold text-slate-200">Steady Full View</span>
-            <span className="text-slate-500">·</span>
-            <span className="text-sky-300">1080p Cinema</span>
-          </div>
-        </div>
 
         {/* Steady Full Screen Presentation Viewport */}
         <div 

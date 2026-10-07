@@ -488,9 +488,10 @@ export class KeynoteVideoRecorder {
       this.roundRect(ctx, 60, 180, w - 120, 240, 12, true, true);
 
       ctx.fillStyle = '#F2A541';
-      ctx.font = 'italic 300 24px system-ui, sans-serif';
-      const quote = '“Use ARIMA (1,1,0) as the primary export-volume forecast, re-validated quarterly and reviewed by a human planner before it drives binding capacity decisions, with ETS α=0.50 kept as a simple, spreadsheet-based backup.”';
-      ctx.fillText(quote, 90, 260);
+      ctx.font = 'italic 300 22px system-ui, sans-serif';
+      ctx.fillText('“Use ARIMA (1,1,0) as the primary export-volume forecast, re-validated quarterly', 90, 245);
+      ctx.fillText('and reviewed by a human planner before it drives binding capacity decisions,', 90, 285);
+      ctx.fillText('with ETS α=0.50 kept as a simple, spreadsheet-based backup.”', 90, 325);
 
       // Course Credentials Box
       ctx.fillStyle = '#060B14';

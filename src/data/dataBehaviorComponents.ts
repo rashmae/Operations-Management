@@ -70,16 +70,16 @@ export const TIME_SERIES_COMPONENTS_META: Record<'trend' | 'seasonal' | 'cyclica
     id: 'trend',
     name: 'Trend Component',
     symbol: 'T',
-    mathFormula: 'T_t = a + b \\cdot t \\quad (r = 0.06, \\text{ slope } b \\approx 312 \\text{ TEU/mo})',
+    mathFormula: 'T_t = a + b \\cdot t \\quad (r = -0.39 \\text{ in Dev, } b = -2,216 \\text{ TEUs/mo})',
     color: '#38BDF8', // Cyan / Sky
     secondaryColor: '#0284C7',
-    tagline: 'Secular Flatline: Negligible Linear Drift',
-    empiricalInsight: 'With a correlation coefficient of r = 0.06 across 36 months, linear trend explains less than 0.4% of volume variation (R² < 0.004). The long-term export baseline rests around 385,000 TEUs without organic secular expansion.',
+    tagline: 'Secular Trend: Negative In-Sample Drift (r = -0.39)',
+    empiricalInsight: 'In development (Months 1–30), linear regression yields r = -0.39 with a downward slope of -2,216 TEUs/month driven by the 2022 freight contraction. Across all 36 months, secular trend flattens (r = 0.06), proving linear regression fails to track operational cargo swings.',
     varianceContributionPct: 3.8,
     operationalEffect: {
       category: 'CapEx & Infrastructure Planning',
       headline: 'Berth Allocation & Capital Gantry Crane Investment',
-      impactSummary: 'Because secular trend is virtually zero (r = 0.06), port terminal authorities cannot justify capital expenditures on automatic annual volume growth assumptions.',
+      impactSummary: 'Because linear trend is distorted by the 2022 decline (r = -0.39) and secular growth is negligible, port authorities cannot rely on straight-line extrapolation.',
       terminalAction: 'Base long-term berth expansion on contract-backed ocean carrier alliance commitments rather than straight-line volume growth extrapolations.',
       riskIfIgnored: 'Risk of overbuilding multi-million dollar container berths and automated stacking yards that remain chronically underutilized.'
     },
