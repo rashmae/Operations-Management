@@ -321,10 +321,10 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
   // Movement dynamic sequence code requested for visualization rhythm
   const movementPulseArray = useMemo(() => [4, 6, 5.5, 9, 8, 13, 12.5, 19, 24, 23, 33, 48], []);
 
-  const holdoutSvgW = 860;
+  const holdoutSvgW = 960;
   const holdoutSvgH = 340;
-  const holdoutPadL = 80;
-  const holdoutPadR = 140;
+  const holdoutPadL = 75;
+  const holdoutPadR = 225;
   const holdoutPadT = 45;
   const holdoutPadB = 55;
   const holdoutPlotW = holdoutSvgW - holdoutPadL - holdoutPadR;
@@ -2010,19 +2010,28 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       <span className="w-3 h-3 rounded-full bg-amber-500/90" />
                       <span className="w-3 h-3 rounded-full bg-emerald-500/90" />
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">arima_optimization.py — Instructor Code 14</span>
+                    <span className="text-[11px] font-mono text-slate-400">Google Colab · Step 5: ARIMA(1,1,0) (Instructor Code 14)</span>
                     <span className="text-[10px] font-mono text-sky-400 font-bold px-2 py-0.5 rounded bg-sky-950/80 border border-sky-800">AIC: 701.43</span>
                   </div>
 
-                  {/* Terminal Code Body with kind-based lively styling */}
+                  {/* Terminal Code Body with kind-based lively styling matching Google Colab */}
                   <div className="p-4 md:p-5 font-mono text-xs md:text-sm text-slate-300 space-y-2 text-left leading-relaxed">
-                    {/* Line 1: cmd */}
+                    {/* Line 1: cmd - Exact import from Google Colab */}
                     <div className="flex items-center gap-2">
-                      <span className="text-sky-400 font-bold select-none">$</span>
-                      <span className="text-white font-semibold">python -m statsmodels.tsa.arima --order=(1,1,0) --data=pola_export_teus.csv</span>
+                      <span className="text-sky-400 font-bold select-none">&gt;&gt;&gt;</span>
+                      <span className="text-purple-300 font-semibold">from</span>
+                      <span className="text-white font-semibold">statsmodels.tsa.arima.model</span>
+                      <span className="text-purple-300 font-semibold">import</span>
+                      <span className="text-[#F2A541] font-bold">ARIMA</span>
                     </div>
 
-                    {/* Line 2: dim */}
+                    {/* Line 2: cmd - Exact fit line from Google Colab */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sky-400 font-bold select-none">&gt;&gt;&gt;</span>
+                      <span className="text-white font-semibold">arima_model = ARIMA(y_train, order=(1, 1, 0)).fit()</span>
+                    </div>
+
+                    {/* Line 3: dim - Training output diagnostics */}
                     {beatElapsedSeconds >= 2.5 && (
                       <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="text-slate-400 text-xs flex items-center gap-2 pl-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
@@ -2030,7 +2039,7 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       </motion.div>
                     )}
 
-                    {/* Line 3: dim */}
+                    {/* Line 4: dim - Parameter estimation */}
                     {beatElapsedSeconds >= 5.5 && (
                       <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="text-slate-400 text-xs flex items-center gap-2 pl-3">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -2038,25 +2047,29 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       </motion.div>
                     )}
 
-                    {/* Line 4: ok */}
+                    {/* Line 5: ok - Model selection verification */}
                     {beatElapsedSeconds >= 8.5 && (
                       <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="text-emerald-400 font-semibold text-xs flex items-center gap-2 pl-3 bg-emerald-950/30 py-1 px-2 rounded border border-emerald-500/30">
                         <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/30 text-emerald-300 flex items-center justify-center text-[10px] font-bold">✓</span>
-                        <span>Created 1 optimal model: ARIMA(1,1,0) established -&gt; Lowest AIC: 701.43 (vs 714.2 for AR2)</span>
+                        <span>Fitted 1 optimal model: ARIMA(1,1,0) established -&gt; Minimum AIC: 701.43 (vs 714.2 for AR2)</span>
                       </motion.div>
                     )}
 
-                    {/* Line 5: cmd */}
+                    {/* Line 6: cmd - Exact forecast prediction from Google Colab */}
                     {beatElapsedSeconds >= 11.5 && (
                       <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2 pt-1 border-t border-slate-800/80">
-                        <span className="text-amber-400 font-bold select-none">&gt;</span>
-                        <span className="text-amber-300 font-semibold">model.forecast(steps=6) -&gt; Holdout Validation Horizon (Jul–Dec 2024)</span>
+                        <span className="text-amber-400 font-bold select-none">&gt;&gt;&gt;</span>
+                        <span className="text-amber-300 font-semibold">arima_preds = arima_model.forecast(steps=6)</span>
+                        <span className="text-slate-400 text-xs"># Out-of-Sample Holdout (Jul–Dec 2024)</span>
                         <span className="text-[#F2A541] font-bold animate-pulse">▌</span>
                       </motion.div>
                     )}
                     
                     {/* Metrics Footer Badges */}
                     <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-3 text-[11px]">
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" /> Colab Verified
+                      </span>
                       <span className="text-emerald-400 font-bold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" /> Stationary (d=1)
                       </span>
@@ -2146,10 +2159,14 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       </g>
                     ))}
 
-                    {/* End Callout Badge */}
-                    <text x={holdoutLrPoints[5].x + 12} y={holdoutLrPoints[5].y + 4} textAnchor="start" fill="#38BDF8" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                      Lagged LR: 405k
-                    </text>
+                    {/* End Callout Badge with styled container pill */}
+                    <g transform={`translate(${holdoutLrPoints[5].x + 10}, ${holdoutLrPoints[5].y - 12})`}>
+                      <rect x="0" y="0" width="145" height="24" rx="6" fill="#082F49" stroke="#38BDF8" strokeWidth="1.5" />
+                      <circle cx="10" cy="12" r="3.5" fill="#38BDF8" />
+                      <text x="18" y="16" fill="#7DD3FC" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                        Lagged LR: 405k
+                      </text>
+                    </g>
                   </svg>
 
                   {/* Summary Card */}
@@ -2237,10 +2254,14 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       </g>
                     ))}
 
-                    {/* End Callout Badge */}
-                    <text x={holdoutRfPoints[5].x + 12} y={holdoutRfPoints[5].y + 4} textAnchor="start" fill="#C084FC" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                      Random Forest: 420k
-                    </text>
+                    {/* End Callout Badge with styled container pill */}
+                    <g transform={`translate(${holdoutRfPoints[5].x + 10}, ${holdoutRfPoints[5].y - 12})`}>
+                      <rect x="0" y="0" width="165" height="24" rx="6" fill="#1E1B4B" stroke="#C084FC" strokeWidth="1.5" />
+                      <circle cx="10" cy="12" r="3.5" fill="#C084FC" />
+                      <text x="18" y="16" fill="#E9D5FF" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                        Random Forest: 420k
+                      </text>
+                    </g>
                   </svg>
 
                   {/* Summary Card */}
@@ -2358,20 +2379,43 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       </g>
                     ))}
 
-                    {/* Direct Right-Hand Labels at Period 36 */}
+                    {/* Direct Right-Hand Labels at Period 36 with styled glowing badges */}
                     <g transform={`translate(${holdoutActualPoints[5].x + 12}, 0)`}>
-                      <text y={holdoutActualPoints[5].y + 4} fill="#F8FAFC" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                        Actual: 460k
-                      </text>
-                      <text y={holdoutArimaPoints[5].y + 4} fill="#F2A541" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                        ★ ARIMA: 427k (20,919 MAE)
-                      </text>
-                      <text y={holdoutRfPoints[5].y + 4} fill="#C084FC" fontSize="10" fontFamily="monospace">
-                        RF: 420k (37k MAE)
-                      </text>
-                      <text y={holdoutLrPoints[5].y + 4} fill="#38BDF8" fontSize="10" fontFamily="monospace">
-                        LR: 405k (38k MAE)
-                      </text>
+                      {/* Actual Data Badge */}
+                      <g transform={`translate(0, ${holdoutActualPoints[5].y - 12})`}>
+                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#0F172A" stroke="#FFFFFF" strokeOpacity="0.4" strokeWidth="1" />
+                        <circle cx="10" cy="11" r="3.5" fill="#FFFFFF" />
+                        <text x="20" y="15" fill="#FFFFFF" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                          Actual: 460,422 TEUs
+                        </text>
+                      </g>
+
+                      {/* ARIMA (1,1,0) Winner Badge - Glowing */}
+                      <g transform={`translate(0, ${holdoutArimaPoints[5].y - 13})`}>
+                        <rect x="0" y="0" width="195" height="25" rx="6" fill="#451A03" stroke="#F2A541" strokeWidth="1.6" />
+                        <circle cx="10" cy="12.5" r="4" fill="#F2A541" />
+                        <text x="20" y="17" fill="#F2A541" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                          ★ ARIMA: 427k (20,919 MAE)
+                        </text>
+                      </g>
+
+                      {/* Random Forest Badge */}
+                      <g transform={`translate(0, ${holdoutRfPoints[5].y - 11})`}>
+                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#1E1B4B" stroke="#C084FC" strokeOpacity="0.5" strokeWidth="1" />
+                        <circle cx="10" cy="11" r="3" fill="#C084FC" />
+                        <text x="18" y="15" fill="#E9D5FF" fontSize="10.5" fontFamily="monospace">
+                          RF: 420k (37,138 MAE)
+                        </text>
+                      </g>
+
+                      {/* Lagged LR Badge */}
+                      <g transform={`translate(0, ${holdoutLrPoints[5].y - 11})`}>
+                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#082F49" stroke="#38BDF8" strokeOpacity="0.5" strokeWidth="1" />
+                        <circle cx="10" cy="11" r="3" fill="#38BDF8" />
+                        <text x="18" y="15" fill="#7DD3FC" fontSize="10.5" fontFamily="monospace">
+                          LR: 405k (37,990 MAE)
+                        </text>
+                      </g>
                     </g>
                   </svg>
 
@@ -2886,17 +2930,26 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                   alt="Port of Los Angeles Final Bookend"
                   className="w-full h-full object-cover brightness-[0.35] contrast-[1.1]"
                 />
-                <div className="relative z-10 max-w-4xl flex flex-col items-center gap-3">
-                  <h2 className="text-3xl md:text-5xl font-light text-white tracking-wide">
-                    USE ARIMA (1,1,0).
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.94 }}
+                  animate={{ opacity: 1, scale: 1.0 }}
+                  transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative z-10 max-w-4xl flex flex-col items-center gap-4 bg-slate-950/85 p-8 rounded-3xl border border-amber-500/40 shadow-2xl backdrop-blur-md"
+                >
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 text-xs font-mono font-bold uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-[#F2A541] animate-ping" />
+                    <span>Industrial Engineering Final Verdict</span>
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-extralight text-white tracking-wide drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                    USE ARIMA (1, 1, 0)
                   </h2>
-                  <div className="text-sm md:text-base font-mono text-[#F2A541] tracking-widest uppercase">
-                    +5% FLEXIBLE BUFFER · REVALIDATE QUARTERLY.
+                  <div className="text-base md:text-xl font-mono text-[#F2A541] font-bold tracking-widest uppercase drop-shadow-[0_0_12px_rgba(242,165,65,0.6)]">
+                    +5% TO +8% FLEXIBLE BUFFER · REVALIDATE QUARTERLY
                   </div>
-                  <div className="text-xs md:text-sm font-mono text-slate-400 tracking-widest uppercase">
-                    ETS α = 0.50 SPREADSHEET BACKUP · HUMAN REVIEW.
+                  <div className="text-xs md:text-sm font-mono text-slate-300 tracking-wider">
+                    ETS α = 0.50 SPREADSHEET AUDIT BACKUP · HUMAN CHIEF OVERRIDE
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
