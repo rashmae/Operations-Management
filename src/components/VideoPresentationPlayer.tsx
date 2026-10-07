@@ -5,7 +5,8 @@ import {
   Maximize, Minimize, Mic, Download, Layers,
   ChevronRight, ArrowRight, ShieldCheck, Ship, Anchor,
   Video, Printer, Check, Sparkles, TrendingUp, BarChart3, Sliders, Cpu,
-  Award, Compass, Activity, Brain, UserCheck, Terminal, AlertTriangle
+  Award, Compass, Activity, Brain, UserCheck, Terminal, AlertTriangle,
+  Calendar, Zap, Waves
 } from 'lucide-react';
 import { KEYNOTE_BEATS, KeynoteBeat, TOTAL_KEYNOTE_SECONDS } from '../data/presentationSlides';
 import { FULL_TIME_SERIES, BaselineModelChoice, GROUP_INFO, VALIDATION_METRICS } from '../data/forecastingData';
@@ -52,6 +53,7 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
   const [isGeneratingPPTX, setIsGeneratingPPTX] = useState<boolean>(false);
   const [mouseActive, setMouseActive] = useState<boolean>(true);
   const [videoNotification, setVideoNotification] = useState<string | null>(null);
+  const [beat1SelectedComponent, setBeat1SelectedComponent] = useState<'all' | 'trend' | 'seasonality' | 'cyclicality' | 'randomness' | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -305,6 +307,45 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
   const toPath = (pts: { x: number; y: number }[]) => {
     return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
   };
+
+  // Active decomposition component in Beat 1 (either manually chosen or auto-sequenced)
+  const activeBeat1Component = useMemo(() => {
+    if (beat1SelectedComponent) return beat1SelectedComponent;
+    if (currentBeatIndex !== 1) return 'all';
+    if (beatElapsedSeconds < 14) return 'all';
+    if (beatElapsedSeconds < 18) return 'trend';
+    if (beatElapsedSeconds < 22) return 'seasonality';
+    if (beatElapsedSeconds < 26) return 'cyclicality';
+    if (beatElapsedSeconds < 34) return 'randomness';
+    return 'all';
+  }, [beat1SelectedComponent, currentBeatIndex, beatElapsedSeconds]);
+
+  // Macroeconomic cycle points (3-year wave: 2022 high -> 2023 destocking trough -> 2024 recovery surge)
+  const macroCyclePoints = useMemo(() => {
+    return Array.from({ length: 36 }).map((_, i) => {
+      const t = i + 1;
+      const norm = (t - 1) / 35; // 0 to 1
+      const val = 415000 - 85000 * Math.sin(norm * Math.PI * 0.95) + 38000 * norm;
+      return { x: getX(t), y: getY(val) };
+    });
+  }, []);
+
+  // Noise band upper and lower paths (for Randomness / Irregular component)
+  const noiseBandUpperPath = useMemo(() => {
+    const pts = FULL_TIME_SERIES.map((r) => ({
+      x: getX(r.period),
+      y: getY(r.actual + 13000)
+    }));
+    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  }, []);
+
+  const noiseBandLowerPath = useMemo(() => {
+    const pts = FULL_TIME_SERIES.map((r) => ({
+      x: getX(r.period),
+      y: getY(r.actual - 13000)
+    }));
+    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  }, []);
 
   // Full validation ranking models (Exact from Analytical Report Table 2)
   const validationRanking = [
@@ -773,112 +814,703 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               </motion.div>
             )}
 
-            {/* Phase 1d (13s - 32s): MORPH 2 — 36-Month Chart with Kinetic Branching Nodes & Frosted Widgets */}
+            {/* Phase 1d (13s - 32s): MORPH 2 — 36-Month Chart with 4 Components Decomposition (T, S, C, I) */}
             {beatElapsedSeconds >= 13 && beatElapsedSeconds < 32 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.0 }}
-                className="absolute inset-0 flex flex-col items-center justify-center p-6 md:p-10 z-10"
+                className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 z-10"
               >
-                {/* Top Info Bar with Apple-style Frosted Widget */}
-                <div className="w-full max-w-4xl flex items-center justify-between mb-2 px-2 text-xs font-mono">
+                {/* Top Decomposition Interactive Header & Component Selector */}
+                <div className="w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-2.5 mb-2 px-2 text-xs font-mono">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping" />
-                    <span className="text-slate-300 font-bold uppercase tracking-wider">Port of LA Exports (TEUs)</span>
+                    <span className="text-slate-200 font-bold tracking-wide uppercase">
+                      Port of LA Exports (TEUs) · 4 Components
+                    </span>
                   </div>
 
-                  {/* Frosted Glass Heartbeat / Anomaly Widget (Inspired by Video 2) */}
-                  {beatElapsedSeconds >= 20 && beatElapsedSeconds < 29 && (
-                    <motion.div 
-                      initial={{ scale: 0.85, opacity: 0, y: -10 }}
-                      animate={{ scale: 1, opacity: 1, y: 0 }}
-                      className="px-3.5 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-md text-[#F2A541] border border-amber-500/50 font-bold flex items-center gap-2 shadow-xl"
+                  {/* 4 Components Interactive Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-950/85 border border-slate-800 backdrop-blur-md shadow-lg">
+                    <button
+                      onClick={() => setBeat1SelectedComponent(activeBeat1Component === 'all' && beat1SelectedComponent === 'all' ? null : 'all')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        activeBeat1Component === 'all'
+                          ? 'bg-slate-800 text-white shadow border border-slate-600'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
                     >
-                      <AlertTriangle className="w-4 h-4 text-[#F2A541] animate-bounce" />
-                      <span>FEB 2023 ANOMALY: 236,264 TEUs (-32.0%)</span>
-                    </motion.div>
-                  )}
+                      All 4
+                    </button>
+
+                    <button
+                      onClick={() => setBeat1SelectedComponent(beat1SelectedComponent === 'trend' ? null : 'trend')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        activeBeat1Component === 'trend'
+                          ? 'bg-sky-500/25 text-sky-300 border border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.4)]'
+                          : 'text-slate-400 hover:text-sky-300'
+                      }`}
+                    >
+                      <TrendingUp className="w-3 h-3 text-sky-400" />
+                      <span>① Trend (T)</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBeat1SelectedComponent(beat1SelectedComponent === 'seasonality' ? null : 'seasonality')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        activeBeat1Component === 'seasonality'
+                          ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                          : 'text-slate-400 hover:text-emerald-300'
+                      }`}
+                    >
+                      <Calendar className="w-3 h-3 text-emerald-400" />
+                      <span>② Seasonality (S)</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBeat1SelectedComponent(beat1SelectedComponent === 'cyclicality' ? null : 'cyclicality')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        activeBeat1Component === 'cyclicality'
+                          ? 'bg-purple-500/25 text-purple-300 border border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+                          : 'text-slate-400 hover:text-purple-300'
+                      }`}
+                    >
+                      <Waves className="w-3 h-3 text-purple-400" />
+                      <span>③ Cyclicality (C)</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBeat1SelectedComponent(beat1SelectedComponent === 'randomness' ? null : 'randomness')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        activeBeat1Component === 'randomness'
+                          ? 'bg-amber-500/25 text-amber-300 border border-amber-400 shadow-[0_0_12px_rgba(242,165,65,0.4)]'
+                          : 'text-slate-400 hover:text-amber-300'
+                      }`}
+                    >
+                      <Zap className="w-3 h-3 text-amber-400" />
+                      <span>④ Randomness (I)</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="relative w-full max-w-4xl h-[70%]">
+                {/* SVG Graph Container */}
+                <div className="relative w-full max-w-5xl h-[65%] md:h-[70%]">
                   <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full overflow-visible">
                     <defs>
                       <linearGradient id="polaAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#1B6CA8" stopOpacity="0.4" />
+                        <stop offset="0%" stopColor="#1B6CA8" stopOpacity="0.35" />
                         <stop offset="100%" stopColor="#1B6CA8" stopOpacity="0.0" />
+                      </linearGradient>
+
+                      {/* Seasonality Emerald Gradient */}
+                      <linearGradient id="seasonGreenGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.28" />
+                        <stop offset="50%" stopColor="#10B981" stopOpacity="0.12" />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity="0.02" />
+                      </linearGradient>
+
+                      {/* Cyclicality Purple Gradient */}
+                      <linearGradient id="cyclePurpleGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#A855F7" stopOpacity="0.32" />
+                        <stop offset="60%" stopColor="#A855F7" stopOpacity="0.10" />
+                        <stop offset="100%" stopColor="#A855F7" stopOpacity="0.0" />
+                      </linearGradient>
+
+                      {/* Randomness Amber Glow */}
+                      <filter id="amberShockGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="5" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      {/* Trend Cyan Glow */}
+                      <filter id="cyanTrendGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      {/* Seasonality Emerald Glow */}
+                      <filter id="emeraldSeasonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      {/* Cyclicality Purple Glow */}
+                      <filter id="purpleCycleGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      {/* High-Impact Laser Neon Glow for Actual Line */}
+                      <filter id="laserLineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3.5" result="blur1" />
+                        <feGaussianBlur stdDeviation="8" result="blur2" />
+                        <feMerge>
+                          <feMergeNode in="blur2" />
+                          <feMergeNode in="blur1" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
+                      {/* Electric Shimmer Area Gradient Under Historical Line */}
+                      <linearGradient id="electricAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.25" />
+                        <stop offset="60%" stopColor="#0284C7" stopOpacity="0.08" />
+                        <stop offset="100%" stopColor="#0B2545" stopOpacity="0.0" />
+                      </linearGradient>
+
+                      {/* Vertical Scanning Sonar Beam Gradient */}
+                      <linearGradient id="sonarScanBeam" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.0" />
+                        <stop offset="50%" stopColor="#38BDF8" stopOpacity="0.22" />
+                        <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.0" />
                       </linearGradient>
                     </defs>
 
-                    {/* Minimal grid lines */}
+                    {/* Minimal Horizontal Grid Lines & Values */}
                     {[250000, 350000, 450000].map((v) => (
-                      <line
-                        key={v}
-                        x1={padLeft}
-                        y1={getY(v)}
-                        x2={padLeft + plotW}
-                        y2={getY(v)}
-                        stroke="#1E293B"
-                        strokeWidth="1"
-                        strokeDasharray="4 6"
-                      />
+                      <g key={v}>
+                        <line
+                          x1={padLeft}
+                          y1={getY(v)}
+                          x2={padLeft + plotW}
+                          y2={getY(v)}
+                          stroke="#1E293B"
+                          strokeWidth="1"
+                          strokeDasharray="4 6"
+                        />
+                        <text
+                          x={padLeft - 10}
+                          y={getY(v) + 4}
+                          textAnchor="end"
+                          fill="#64748B"
+                          fontSize="10"
+                          fontFamily="monospace"
+                        >
+                          {v / 1000}k
+                        </text>
+                      </g>
                     ))}
 
-                    {/* Partial Drawn Line up to current index */}
+                    {/* Vertical Year Partition Boundaries */}
+                    <line x1={getX(12.5)} y1={padTop} x2={getX(12.5)} y2={padTop + plotH} stroke="#334155" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+                    <line x1={getX(24.5)} y1={padTop} x2={getX(24.5)} y2={padTop + plotH} stroke="#334155" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+
+                    {/* Year Labels at Base of Chart */}
+                    <text x={getX(6.5)} y={padTop + plotH + 20} textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      2022 (Months 1–12)
+                    </text>
+                    <text x={getX(18.5)} y={padTop + plotH + 20} textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      2023 (Months 13–24)
+                    </text>
+                    <text x={getX(30.5)} y={padTop + plotH + 20} textAnchor="middle" fill="#64748B" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      2024 (Months 25–36)
+                    </text>
+
+                    {/* ============================================================== */}
+                    {/* COMPONENT 2: SEASONALITY (S) — Recurring Annual Q3 Peak Surges  */}
+                    {/* ============================================================== */}
+                    {((beat1SelectedComponent === 'seasonality' || beat1SelectedComponent === 'all') || 
+                      (!beat1SelectedComponent && beatElapsedSeconds >= 18 && (activeBeat1Component === 'all' || activeBeat1Component === 'seasonality'))) && (
+                      <g className="transition-opacity duration-700">
+                        {/* 2022 Q3 Peak Season Shading (Jul-Oct) */}
+                        <rect
+                          x={getX(7)}
+                          y={padTop}
+                          width={getX(10) - getX(7)}
+                          height={plotH}
+                          fill="url(#seasonGreenGrad)"
+                          rx="6"
+                        />
+                        <g transform={`translate(${(getX(7) + getX(10)) / 2}, ${padTop + 14})`} className="anim-float-badge">
+                          <rect x="-42" y="-10" width="84" height="18" rx="4" fill="#064E3B" stroke="#10B981" strokeWidth="1" opacity="0.9" />
+                          <text textAnchor="middle" y="3" fill="#6EE7B7" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                            Q3 HARVEST
+                          </text>
+                        </g>
+
+                        {/* 2023 Q3 Peak Season Shading (Jul-Oct) */}
+                        <rect
+                          x={getX(19)}
+                          y={padTop}
+                          width={getX(22) - getX(19)}
+                          height={plotH}
+                          fill="url(#seasonGreenGrad)"
+                          rx="6"
+                        />
+                        <g transform={`translate(${(getX(19) + getX(22)) / 2}, ${padTop + 14})`} className="anim-float-badge">
+                          <rect x="-42" y="-10" width="84" height="18" rx="4" fill="#064E3B" stroke="#10B981" strokeWidth="1" opacity="0.9" />
+                          <text textAnchor="middle" y="3" fill="#6EE7B7" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                            Q3 HARVEST
+                          </text>
+                        </g>
+
+                        {/* 2024 Q3 Peak Season Shading (Jul-Oct) */}
+                        <rect
+                          x={getX(31)}
+                          y={padTop}
+                          width={getX(34) - getX(31)}
+                          height={plotH}
+                          fill="url(#seasonGreenGrad)"
+                          rx="6"
+                        />
+                        <g transform={`translate(${(getX(31) + getX(34)) / 2}, ${padTop + 14})`} className="anim-float-badge">
+                          <rect x="-42" y="-10" width="84" height="18" rx="4" fill="#064E3B" stroke="#10B981" strokeWidth="1" opacity="0.9" />
+                          <text textAnchor="middle" y="3" fill="#6EE7B7" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                            Q3 HARVEST
+                          </text>
+                        </g>
+
+                        {/* Peak Pulsing Ripple Rings at Harvest Crests */}
+                        {[8, 20, 33].map((mIdx) => {
+                          const pt = actualPoints[mIdx - 1];
+                          return (
+                            <g key={`season-crest-${mIdx}`} transform={`translate(${pt.x}, ${pt.y})`}>
+                              <circle r="18" fill="none" stroke="#10B981" strokeWidth="1.5" className="animate-ping opacity-75" />
+                              <circle r="10" fill="none" stroke="#34D399" strokeWidth="1.5" className="animate-pulse" />
+                              <circle r="5" fill="#34D399" filter="url(#emeraldSeasonGlow)" />
+                              <line x1="0" y1="-8" x2="0" y2="-22" stroke="#34D399" strokeWidth="1.5" strokeDasharray="2 2" />
+                              <polygon points="-4,-20 0,-27 4,-20" fill="#34D399" />
+                            </g>
+                          );
+                        })}
+
+                        {/* Seasonality Callout Banner */}
+                        <g transform={`translate(${getX(19)}, 42)`} className="anim-float-badge">
+                          <rect x="-150" y="-14" width="300" height="28" rx="8" fill="#064E3B" stroke="#34D399" strokeWidth="1.5" opacity="0.95" filter="url(#emeraldSeasonGlow)" />
+                          <circle cx="-132" cy="0" r="5" fill="#34D399" className="animate-ping" />
+                          <circle cx="-132" cy="0" r="3.5" fill="#10B981" />
+                          <text textAnchor="middle" x="10" y="4" fill="#A7F3D0" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                            ② SEASONALITY (S): Annual Q3 Harvest Peaks
+                          </text>
+                        </g>
+                      </g>
+                    )}
+
+                    {/* ============================================================== */}
+                    {/* COMPONENT 3: CYCLICALITY (C) — Multi-Year Macro Trade Waves    */}
+                    {/* ============================================================== */}
+                    {((beat1SelectedComponent === 'cyclicality' || beat1SelectedComponent === 'all') || 
+                      (!beat1SelectedComponent && beatElapsedSeconds >= 22 && (activeBeat1Component === 'all' || activeBeat1Component === 'cyclicality'))) && (
+                      <g className="transition-opacity duration-700">
+                        {/* Shaded Macro Cycle Under-Fill */}
+                        <path
+                          d={`${toPath(macroCyclePoints)} L ${getX(36)} ${padTop + plotH} L ${getX(1)} ${padTop + plotH} Z`}
+                          fill="url(#cyclePurpleGrad)"
+                          opacity="0.35"
+                        />
+                        {/* Macro Cycle Trajectory Line with animated dashed flow */}
+                        <path
+                          d={toPath(macroCyclePoints)}
+                          fill="none"
+                          stroke="#C084FC"
+                          strokeWidth="6"
+                          opacity="0.3"
+                          filter="url(#purpleCycleGlow)"
+                        />
+                        <path
+                          d={toPath(macroCyclePoints)}
+                          fill="none"
+                          stroke="#A855F7"
+                          strokeWidth="3.5"
+                          strokeDasharray="8 5"
+                          strokeLinecap="round"
+                          className="anim-flow-cycle"
+                        />
+
+                        {/* Macro Trough Marker at 2023 Destocking Bottom */}
+                        <g transform={`translate(${getX(17)}, ${getY(350000)})`}>
+                          <circle r="22" fill="none" stroke="#C084FC" strokeWidth="1.5" className="animate-ping opacity-60" />
+                          <circle r="14" fill="none" stroke="#A855F7" strokeWidth="1.5" className="animate-pulse" />
+                          <circle r="7" fill="#C084FC" filter="url(#purpleCycleGlow)" />
+                        </g>
+
+                        {/* Macro Wave Crest Marker at 2022 Pre-Drop High */}
+                        <g transform={`translate(${getX(5)}, ${getY(415000)})`}>
+                          <circle r="12" fill="none" stroke="#C084FC" strokeWidth="1.2" className="animate-pulse" />
+                          <circle r="5" fill="#A855F7" />
+                        </g>
+
+                        {/* Cyclicality Callout Banner */}
+                        <g transform={`translate(${getX(10)}, ${getY(310000)})`} className="anim-float-badge">
+                          <rect x="-155" y="-14" width="310" height="28" rx="8" fill="#3B0764" stroke="#C084FC" strokeWidth="1.5" opacity="0.95" filter="url(#purpleCycleGlow)" />
+                          <circle cx="-137" cy="0" r="5" fill="#C084FC" className="animate-ping" />
+                          <circle cx="-137" cy="0" r="3.5" fill="#A855F7" />
+                          <text textAnchor="middle" x="10" y="4" fill="#F3E8FF" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                            ③ CYCLICALITY (C): Multi-Year Trade Waves
+                          </text>
+                        </g>
+                      </g>
+                    )}
+
+                    {/* ============================================================== */}
+                    {/* COMPONENT 1: TREND (T) — Linear Downward Slope (-2,216 TEUs)   */}
+                    {/* ============================================================== */}
+                    {(activeBeat1Component === 'all' || activeBeat1Component === 'trend') && (
+                      <g className="transition-opacity duration-700">
+                        {/* Glow Halo around Trend line */}
+                        <line
+                          x1={getX(1)}
+                          y1={getY(FULL_TIME_SERIES[0].trend || 409404)}
+                          x2={getX(36)}
+                          y2={getY(FULL_TIME_SERIES[35].trend || 331833)}
+                          stroke="#38BDF8"
+                          strokeWidth="8"
+                          opacity="0.35"
+                          filter="url(#cyanTrendGlow)"
+                        />
+                        {/* Animated Crisp Dashed Regression Vector with flowing dash */}
+                        <line
+                          x1={getX(1)}
+                          y1={getY(FULL_TIME_SERIES[0].trend || 409404)}
+                          x2={getX(36)}
+                          y2={getY(FULL_TIME_SERIES[35].trend || 331833)}
+                          stroke="#38BDF8"
+                          strokeWidth="3.2"
+                          strokeDasharray="8 5"
+                          strokeLinecap="round"
+                          className="anim-flow-trend"
+                        />
+
+                        {/* Start Anchor Node on Trend Line */}
+                        <g transform={`translate(${getX(1)}, ${getY(FULL_TIME_SERIES[0].trend || 409404)})`}>
+                          <circle r="5" fill="#38BDF8" filter="url(#cyanTrendGlow)" />
+                        </g>
+
+                        {/* Downward Direction Arrow at end of Trend line with pulsing radar */}
+                        <g transform={`translate(${getX(36)}, ${getY(FULL_TIME_SERIES[35].trend || 331833)})`}>
+                          <circle r="14" fill="none" stroke="#38BDF8" strokeWidth="1.5" className="animate-ping opacity-75" />
+                          <circle r="7" fill="#38BDF8" filter="url(#cyanTrendGlow)" />
+                          <path d="M -4 -8 L 4 0 L -4 8" fill="none" stroke="#0B2545" strokeWidth="2.5" />
+                        </g>
+
+                        {/* Trend Callout Badge */}
+                        <g transform={`translate(${getX(22)}, ${getY(362000) - 25})`} className="anim-float-badge">
+                          <rect x="-160" y="-14" width="320" height="28" rx="8" fill="#0B2545" stroke="#38BDF8" strokeWidth="1.5" opacity="0.95" filter="url(#cyanTrendGlow)" />
+                          <circle cx="-142" cy="0" r="5" fill="#38BDF8" className="animate-ping" />
+                          <circle cx="-142" cy="0" r="3.5" fill="#0284C7" />
+                          <text textAnchor="middle" x="8" y="4" fill="#BAE6FD" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                            ① TREND (T): y = 411,621 − 2,216·t (r = −0.39)
+                          </text>
+                        </g>
+                      </g>
+                    )}
+
+                    {/* ============================================================== */}
+                    {/* COMPONENT 4: RANDOMNESS / IRREGULAR (I) — Anomaly & Noise Band */}
+                    {/* ============================================================== */}
+                    {((beat1SelectedComponent === 'randomness' || beat1SelectedComponent === 'all') || 
+                      (!beat1SelectedComponent && beatElapsedSeconds >= 26 && (activeBeat1Component === 'all' || activeBeat1Component === 'randomness'))) && (
+                      <g className="transition-opacity duration-700">
+                        {/* Shaded Translucent Uncertainty / Noise Band Envelope */}
+                        <path
+                          d={`${noiseBandUpperPath} L ${actualPoints.slice().reverse().map(p => `${p.x.toFixed(1)} ${(p.y + 13000 * (plotH / (maxVal - minVal))).toFixed(1)}`).join(' L ')} Z`}
+                          fill="#F59E0B"
+                          opacity="0.08"
+                        />
+                        {/* Translucent Uncertainty / Noise Ribbon around curve */}
+                        <path
+                          d={noiseBandUpperPath}
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="1.4"
+                          strokeDasharray="4 3"
+                          opacity="0.6"
+                          className="anim-flow-trend"
+                        />
+                        <path
+                          d={noiseBandLowerPath}
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="1.4"
+                          strokeDasharray="4 3"
+                          opacity="0.6"
+                          className="anim-flow-trend"
+                        />
+
+                        {/* Vertical Drop Plumb Line at Feb 2023 Structural Shock */}
+                        <line
+                          x1={getX(14)}
+                          y1={getY(347493)}
+                          x2={getX(14)}
+                          y2={getY(236264)}
+                          stroke="#F2A541"
+                          strokeWidth="2.5"
+                          strokeDasharray="5 3"
+                          className="anim-flow-trend"
+                        />
+
+                        {/* Pulsing Target Radar Circles on Feb 2023 Shock with double echo ring */}
+                        <g transform={`translate(${getX(14)}, ${getY(236264)})`}>
+                          <circle r="34" fill="none" stroke="#F2A541" strokeWidth="1.5" className="animate-ping opacity-60" />
+                          <circle r="22" fill="none" stroke="#F59E0B" strokeWidth="1.5" className="animate-pulse opacity-80" />
+                          <circle r="12" fill="none" stroke="#FDE68A" strokeWidth="1.5" className="animate-ping opacity-90" />
+                          <circle r="7" fill="#F2A541" filter="url(#amberShockGlow)" />
+                        </g>
+
+                        {/* Shock Origin Dot before the Drop (Jan 2023: 347,493) */}
+                        <g transform={`translate(${getX(14)}, ${getY(347493)})`}>
+                          <circle r="4" fill="#F59E0B" opacity="0.8" />
+                          <text x="10" y="4" fill="#FCD34D" fontSize="9" fontFamily="monospace" fontWeight="bold">
+                            Pre-Shock Baseline
+                          </text>
+                        </g>
+
+                        {/* Shock Callout Badge with Exact Drop - Positioned above point for perfect clearance */}
+                        <g transform={`translate(${getX(14)}, ${getY(236264) - 46})`} className="anim-float-badge">
+                          <rect x="-155" y="-14" width="310" height="28" rx="8" fill="#451A03" stroke="#F59E0B" strokeWidth="1.5" opacity="0.95" filter="url(#amberShockGlow)" />
+                          <circle cx="-137" cy="0" r="5" fill="#F59E0B" className="animate-ping" />
+                          <circle cx="-137" cy="0" r="3.5" fill="#D97706" />
+                          <text textAnchor="middle" x="8" y="4" fill="#FEF3C7" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                            ④ RANDOMNESS (I): Feb 2023 Shock (−32.0%)
+                          </text>
+                          {/* Downward indicator tick pointing straight to the shock drop */}
+                          <polygon points="-5,14 0,22 5,14" fill="#F59E0B" />
+                        </g>
+                      </g>
+                    )}
+
+                    {/* Dynamic Moving Sonar Radar Beam traversing the chart */}
+                    <g className="pointer-events-none anim-radar-sweep">
+                      <rect
+                        x={padLeft}
+                        y={padTop}
+                        width="45"
+                        height={plotH}
+                        fill="url(#sonarScanBeam)"
+                      />
+                      <line
+                        x1={padLeft + 22}
+                        y1={padTop}
+                        x2={padLeft + 22}
+                        y2={padTop + plotH}
+                        stroke="#38BDF8"
+                        strokeWidth="1.2"
+                        strokeDasharray="2 3"
+                        opacity="0.7"
+                      />
+                    </g>
+
+                    {/* Luminous Shaded Area Underneath Actual Trajectory */}
+                    {beat1DrawIndex > 0 && (
+                      <path
+                        d={`${actualPoints.slice(0, beat1DrawIndex + 1).map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ')} L ${actualPoints[beat1DrawIndex].x.toFixed(1)} ${padTop + plotH} L ${actualPoints[0].x.toFixed(1)} ${padTop + plotH} Z`}
+                        fill="url(#electricAreaGrad)"
+                      />
+                    )}
+
+                    {/* Actual Historical Line - Deep Cyan Neon Laser Halo */}
                     {beat1DrawIndex > 0 && (
                       <path
                         d={actualPoints.slice(0, beat1DrawIndex + 1).map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ')}
                         fill="none"
-                        stroke="#1B6CA8"
-                        strokeWidth="3.5"
+                        stroke="#0284C7"
+                        strokeWidth="7"
                         strokeLinecap="round"
+                        strokeLinejoin="round"
+                        opacity="0.45"
+                        filter="url(#laserLineGlow)"
                       />
                     )}
 
-                    {/* February 2023 Anomaly Pulse in Warm Amber */}
-                    {beatElapsedSeconds >= 20 && beatElapsedSeconds < 29 && (
-                      <g transform={`translate(${getX(14)}, ${getY(236264)})`}>
-                        <circle r="22" fill="none" stroke="#F2A541" strokeWidth="2" className="animate-ping opacity-75" />
-                        <circle r="8" fill="#F2A541" />
-                        <text x="14" y="5" fill="#F2A541" className="text-xs font-mono font-bold">
-                          236,264 TEUs (Shock)
-                        </text>
-                      </g>
+                    {/* Actual Historical Line - Crisp White Core with Laser Radiance */}
+                    {beat1DrawIndex > 0 && (
+                      <path
+                        d={actualPoints.slice(0, beat1DrawIndex + 1).map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ')}
+                        fill="none"
+                        stroke="#F0F9FF"
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="anim-laser-line"
+                      />
                     )}
+
+                    {/* Interactive Animated Data Nodes Along the Path */}
+                    {beat1DrawIndex > 0 &&
+                      actualPoints.slice(0, beat1DrawIndex + 1).map((pt, idx) => {
+                        const isLatest = idx === beat1DrawIndex;
+                        const isHarvestPeak = [7, 19, 32].includes(idx); // Q3 crests
+                        const isShockDrop = idx === 13; // Feb 2023
+                        return (
+                          <g key={`data-node-${idx}`} transform={`translate(${pt.x}, ${pt.y})`}>
+                            {/* Outer pulsating halo on key points */}
+                            {(isLatest || isHarvestPeak || isShockDrop) && (
+                              <circle
+                                r={isShockDrop ? "14" : isHarvestPeak ? "12" : "10"}
+                                fill="none"
+                                stroke={isShockDrop ? "#F59E0B" : isHarvestPeak ? "#10B981" : "#38BDF8"}
+                                strokeWidth="1.5"
+                                className="animate-ping opacity-60"
+                              />
+                            )}
+                            {/* Inner crisp core dot */}
+                            <circle
+                              r={isLatest ? "5.5" : "3.5"}
+                              fill={isShockDrop ? "#F59E0B" : isHarvestPeak ? "#34D399" : "#38BDF8"}
+                              stroke="#FFFFFF"
+                              strokeWidth={isLatest ? "2" : "1.2"}
+                              filter="url(#cyanTrendGlow)"
+                            />
+                            {/* Current active leading tracer badge */}
+                            {isLatest && (
+                              <g transform="translate(0, -20)" className="anim-float-badge">
+                                <rect
+                                  x="-45"
+                                  y="-9"
+                                  width="90"
+                                  height="18"
+                                  rx="5"
+                                  fill="#0B2545"
+                                  stroke="#38BDF8"
+                                  strokeWidth="1.2"
+                                  filter="url(#cyanTrendGlow)"
+                                />
+                                <text
+                                  textAnchor="middle"
+                                  y="3.5"
+                                  fill="#E0F2FE"
+                                  fontSize="9"
+                                  fontFamily="monospace"
+                                  fontWeight="bold"
+                                >
+                                  {pt.val.toLocaleString()}
+                                </text>
+                              </g>
+                            )}
+                          </g>
+                        );
+                      })}
                   </svg>
 
-                  {/* Mascot Floating in Bottom Corner pointing to chart */}
+                  {/* Mascot Floating in Bottom Corner pointing to 4 components */}
                   <motion.div
                     animate={{ y: [0, -6, 0] }}
                     transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute -bottom-6 -left-6 hidden sm:flex items-center gap-2 p-2 rounded-2xl bg-slate-950/85 border border-sky-400/50 shadow-2xl backdrop-blur-md"
+                    className="absolute -bottom-6 -left-6 hidden md:flex items-center gap-2 p-2 rounded-2xl bg-slate-950/90 border border-sky-400/50 shadow-2xl backdrop-blur-md"
                   >
                     <div className="w-12 h-12 rounded-xl overflow-hidden border border-sky-400 bg-[#0B2545]">
                       <img src={MASCOT_BLUE} alt="Blue Mascot" className="w-full h-full object-contain" />
                     </div>
                     <div className="text-[10px] font-mono text-left pr-2">
-                      <div className="text-sky-300 font-bold">Lead Analyst</div>
-                      <div className="text-slate-400">Tracking Feb 2023 dip</div>
+                      <div className="text-sky-300 font-bold">Elaiza Jane Aligato</div>
+                      <div className="text-slate-400">Time-Series Component Audit</div>
                     </div>
                   </motion.div>
+                </div>
+
+                {/* Bottom 4 Components Detail Summary Bar */}
+                <div className="w-full max-w-5xl grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 pt-2 border-t border-slate-900/80 text-[10px] font-mono">
+                  <div className={`p-2 rounded-xl border transition-all ${
+                    activeBeat1Component === 'trend' || activeBeat1Component === 'all'
+                      ? 'bg-sky-950/50 border-sky-500/40 text-sky-200'
+                      : 'bg-slate-950/40 border-slate-900 text-slate-500'
+                  }`}>
+                    <div className="font-bold flex items-center gap-1 text-sky-400">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>TREND (T)</span>
+                    </div>
+                    <div className="truncate mt-0.5">Slopes down −2,216/mo (r = −0.39)</div>
+                  </div>
+
+                  {/* Seasonality: Only show once its turn arrives in the beat timeline (18s+) or if selected */}
+                  {(beat1SelectedComponent === 'seasonality' || beat1SelectedComponent === 'all' || (!beat1SelectedComponent && beatElapsedSeconds >= 18)) ? (
+                    <div className={`p-2 rounded-xl border transition-all ${
+                      activeBeat1Component === 'seasonality' || activeBeat1Component === 'all'
+                        ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'
+                        : 'bg-slate-950/40 border-slate-900 text-slate-500'
+                    }`}>
+                      <div className="font-bold flex items-center gap-1 text-emerald-400">
+                        <Calendar className="w-3 h-3" />
+                        <span>SEASONALITY (S)</span>
+                      </div>
+                      <div className="truncate mt-0.5">Recurring Q3 Harvest Peak Surges</div>
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-xl border border-slate-900/40 bg-slate-950/20 text-slate-600 flex flex-col justify-center items-center opacity-40">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>② SEASONALITY</span>
+                      </div>
+                      <div className="text-[9px] mt-0.5 text-slate-600">Pending breakdown...</div>
+                    </div>
+                  )}
+
+                  {/* Cyclicality: Only show once its turn arrives in the beat timeline (22s+) or if selected */}
+                  {(beat1SelectedComponent === 'cyclicality' || beat1SelectedComponent === 'all' || (!beat1SelectedComponent && beatElapsedSeconds >= 22)) ? (
+                    <div className={`p-2 rounded-xl border transition-all ${
+                      activeBeat1Component === 'cyclicality' || activeBeat1Component === 'all'
+                        ? 'bg-purple-950/50 border-purple-500/40 text-purple-200'
+                        : 'bg-slate-950/40 border-slate-900 text-slate-500'
+                    }`}>
+                      <div className="font-bold flex items-center gap-1 text-purple-400">
+                        <Waves className="w-3 h-3" />
+                        <span>CYCLICALITY (C)</span>
+                      </div>
+                      <div className="truncate mt-0.5">Multi-Year Destocking &amp; Rebound</div>
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-xl border border-slate-900/40 bg-slate-950/20 text-slate-600 flex flex-col justify-center items-center opacity-40">
+                      <div className="flex items-center gap-1">
+                        <Waves className="w-3 h-3" />
+                        <span>③ CYCLICALITY</span>
+                      </div>
+                      <div className="text-[9px] mt-0.5 text-slate-600">Pending breakdown...</div>
+                    </div>
+                  )}
+
+                  {/* Randomness: Only show once its turn arrives in the beat timeline (26s+) or if selected */}
+                  {(beat1SelectedComponent === 'randomness' || beat1SelectedComponent === 'all' || (!beat1SelectedComponent && beatElapsedSeconds >= 26)) ? (
+                    <div className={`p-2 rounded-xl border transition-all ${
+                      activeBeat1Component === 'randomness' || activeBeat1Component === 'all'
+                        ? 'bg-amber-950/50 border-amber-500/40 text-amber-200'
+                        : 'bg-slate-950/40 border-slate-900 text-slate-500'
+                    }`}>
+                      <div className="font-bold flex items-center gap-1 text-amber-400">
+                        <Zap className="w-3 h-3" />
+                        <span>RANDOMNESS (I)</span>
+                      </div>
+                      <div className="truncate mt-0.5">Feb 2023 −32% Shock &amp; Residuals</div>
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-xl border border-slate-900/40 bg-slate-950/20 text-slate-600 flex flex-col justify-center items-center opacity-40">
+                      <div className="flex items-center gap-1">
+                        <Zap className="w-3 h-3" />
+                        <span>④ RANDOMNESS</span>
+                      </div>
+                      <div className="text-[9px] mt-0.5 text-slate-600">Pending breakdown...</div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
 
-            {/* Phase 1e (32s - 40s): Chart dissolves, leaving only r = −0.39 in clean typography */}
+            {/* Phase 1e (32s - 40s): Chart completely exits, leaving only r = −0.39 in clean keynote typography */}
             {beatElapsedSeconds >= 32 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1.0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center z-20 flex flex-col items-center gap-3"
+                transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#060B14]/95 backdrop-blur-xl gap-4 p-8"
               >
-                <div className="text-6xl md:text-9xl font-extralight text-slate-100 tracking-wider">
+                <div className="text-7xl md:text-9xl font-extralight text-slate-100 tracking-wider filter drop-shadow-[0_0_35px_rgba(56,189,248,0.3)]">
                   r = −0.39
                 </div>
-                <div className="text-xs md:text-sm font-mono tracking-[0.25em] uppercase text-slate-400">
+                <div className="text-xs md:text-sm font-mono tracking-[0.25em] uppercase text-sky-400 font-semibold bg-sky-950/60 px-4 py-1.5 rounded-full border border-sky-500/30">
                   Slopes Down −2,216 TEUs/Mo · No Steady Trend
                 </div>
               </motion.div>
@@ -911,15 +1543,57 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                 transition={{ duration: 1.0 }}
                 className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center"
               >
+                <div className="flex items-center gap-2 mb-1 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-300 text-xs font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+                  <span>Conventional Baseline 01</span>
+                </div>
                 <h2 className="text-5xl md:text-7xl font-extralight text-slate-100 tracking-wider mb-2">
                   SMA
                 </h2>
                 <div className="text-xs font-mono text-sky-400 mb-6 tracking-widest uppercase">
-                  3-Period Moving Average
+                  3-Period Moving Average · Equal Weights (0.33 ea)
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 md:h-56">
-                  <path d={toPath(smaPoints)} fill="none" stroke="#1B6CA8" strokeWidth="3" strokeLinecap="round" />
-                </svg>
+                <div className="relative w-full h-44 md:h-56">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full overflow-visible">
+                    <defs>
+                      <linearGradient id="smaAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    {/* Shaded Area Underneath SMA */}
+                    <path
+                      d={`${toPath(smaPoints)} L ${smaPoints[smaPoints.length - 1].x} ${padTop + plotH} L ${smaPoints[0].x} ${padTop + plotH} Z`}
+                      fill="url(#smaAreaGrad)"
+                    />
+                    {/* Glowing Aura Line */}
+                    <path
+                      d={toPath(smaPoints)}
+                      fill="none"
+                      stroke="#0284C7"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      opacity="0.4"
+                      filter="url(#cyanTrendGlow)"
+                    />
+                    {/* High-Impact Neon Laser Line */}
+                    <path
+                      d={toPath(smaPoints)}
+                      fill="none"
+                      stroke="#38BDF8"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      className="anim-neon-sma filter drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]"
+                    />
+                    {/* Pulsing Target Nodes Along SMA */}
+                    {smaPoints.filter((_, idx) => idx % 4 === 0 || idx === smaPoints.length - 1).map((pt, i) => (
+                      <g key={`sma-node-${i}`} transform={`translate(${pt.x}, ${pt.y})`}>
+                        <circle r="8" fill="none" stroke="#38BDF8" strokeWidth="1.2" className="animate-ping opacity-60" />
+                        <circle r="4" fill="#38BDF8" filter="url(#cyanTrendGlow)" />
+                      </g>
+                    ))}
+                  </svg>
+                </div>
               </motion.div>
             )}
 
@@ -933,15 +1607,57 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                 transition={{ duration: 1.0 }}
                 className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center"
               >
+                <div className="flex items-center gap-2 mb-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(52,211,153,0.2)]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Conventional Baseline 02</span>
+                </div>
                 <h2 className="text-5xl md:text-7xl font-extralight text-slate-100 tracking-wider mb-2">
                   WMA
                 </h2>
-                <div className="text-xs font-mono text-sky-400 mb-6 tracking-widest uppercase">
-                  Weights: 0.50 / 0.30 / 0.20
+                <div className="text-xs font-mono text-emerald-400 mb-6 tracking-widest uppercase">
+                  Linear Decreasing Weights: 0.50 (t-1) / 0.30 (t-2) / 0.20 (t-3)
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 md:h-56">
-                  <path d={toPath(wmaPoints)} fill="none" stroke="#1B6CA8" strokeWidth="3" strokeLinecap="round" />
-                </svg>
+                <div className="relative w-full h-44 md:h-56">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full overflow-visible">
+                    <defs>
+                      <linearGradient id="wmaAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    {/* Shaded Area Underneath WMA */}
+                    <path
+                      d={`${toPath(wmaPoints)} L ${wmaPoints[wmaPoints.length - 1].x} ${padTop + plotH} L ${wmaPoints[0].x} ${padTop + plotH} Z`}
+                      fill="url(#wmaAreaGrad)"
+                    />
+                    {/* Glowing Aura Line */}
+                    <path
+                      d={toPath(wmaPoints)}
+                      fill="none"
+                      stroke="#059669"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      opacity="0.4"
+                      filter="url(#emeraldSeasonGlow)"
+                    />
+                    {/* High-Impact Neon Laser Line */}
+                    <path
+                      d={toPath(wmaPoints)}
+                      fill="none"
+                      stroke="#34D399"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      className="anim-neon-wma filter drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                    />
+                    {/* Pulsing Target Nodes Along WMA */}
+                    {wmaPoints.filter((_, idx) => idx % 4 === 0 || idx === wmaPoints.length - 1).map((pt, i) => (
+                      <g key={`wma-node-${i}`} transform={`translate(${pt.x}, ${pt.y})`}>
+                        <circle r="8" fill="none" stroke="#34D399" strokeWidth="1.2" className="animate-ping opacity-60" />
+                        <circle r="4" fill="#34D399" filter="url(#emeraldSeasonGlow)" />
+                      </g>
+                    ))}
+                  </svg>
+                </div>
               </motion.div>
             )}
 
@@ -955,26 +1671,69 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                 transition={{ duration: 1.0 }}
                 className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center"
               >
+                <div className="flex items-center gap-2 mb-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-mono font-bold tracking-wider uppercase shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  <span>Conventional Baseline 03 · Dynamic Smoothing</span>
+                </div>
                 <h2 className="text-5xl md:text-7xl font-extralight text-slate-100 tracking-wider mb-2">
                   ETS
                 </h2>
                 <div className="flex items-center gap-2 text-xs font-mono text-sky-400 mb-6 tracking-widest uppercase">
-                  <span>α:</span>
-                  <span className={beatElapsedSeconds < 21 ? 'text-white font-bold' : 'text-slate-500'}>0.20</span>
+                  <span>Smoothing Parameter α:</span>
+                  <span className={`px-2 py-0.5 rounded transition-all ${beatElapsedSeconds < 21 ? 'bg-slate-800 text-white font-bold border border-slate-600 scale-110' : 'text-slate-500'}`}>0.20 (Sluggish)</span>
                   <span>→</span>
-                  <span className={beatElapsedSeconds >= 21 && beatElapsedSeconds < 24 ? 'text-[#F2A541] font-bold text-sm' : 'text-slate-500'}>0.50</span>
+                  <span className={`px-2 py-0.5 rounded transition-all ${beatElapsedSeconds >= 21 && beatElapsedSeconds < 24 ? 'bg-amber-500/20 text-[#F2A541] font-bold text-sm border border-amber-400 shadow-[0_0_12px_rgba(242,165,65,0.4)] scale-125' : 'text-slate-500'}`}>0.50 (Selected OM Baseline)</span>
                   <span>→</span>
-                  <span className={beatElapsedSeconds >= 24 ? 'text-white font-bold' : 'text-slate-500'}>0.80</span>
+                  <span className={`px-2 py-0.5 rounded transition-all ${beatElapsedSeconds >= 24 ? 'bg-slate-800 text-white font-bold border border-slate-600 scale-110' : 'text-slate-500'}`}>0.80 (Reactive)</span>
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 md:h-56">
-                  <path 
-                    d={toPath(beatElapsedSeconds < 21 ? es02Points : beatElapsedSeconds < 24 ? es05Points : es08Points)} 
-                    fill="none" 
-                    stroke="#1B6CA8" 
-                    strokeWidth="3" 
-                    strokeLinecap="round" 
-                  />
-                </svg>
+                <div className="relative w-full h-44 md:h-56">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full overflow-visible">
+                    <defs>
+                      <linearGradient id="etsAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.28" />
+                        <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    {/* Shaded Area Underneath ETS */}
+                    {(() => {
+                      const pts = beatElapsedSeconds < 21 ? es02Points : beatElapsedSeconds < 24 ? es05Points : es08Points;
+                      return (
+                        <>
+                          <path
+                            d={`${toPath(pts)} L ${pts[pts.length - 1].x} ${padTop + plotH} L ${pts[0].x} ${padTop + plotH} Z`}
+                            fill="url(#etsAreaGrad)"
+                          />
+                          {/* Glowing Aura Line */}
+                          <path
+                            d={toPath(pts)}
+                            fill="none"
+                            stroke="#D97706"
+                            strokeWidth="8"
+                            strokeLinecap="round"
+                            opacity="0.4"
+                            filter="url(#amberShockGlow)"
+                          />
+                          {/* High-Impact Neon Laser Line */}
+                          <path
+                            d={toPath(pts)}
+                            fill="none"
+                            stroke="#F59E0B"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            className="anim-neon-ets filter drop-shadow-[0_0_10px_rgba(245,158,11,0.85)]"
+                          />
+                          {/* Pulsing Target Nodes Along ETS */}
+                          {pts.filter((_, idx) => idx % 4 === 0 || idx === pts.length - 1).map((pt, i) => (
+                            <g key={`ets-node-${i}`} transform={`translate(${pt.x}, ${pt.y})`}>
+                              <circle r="8" fill="none" stroke="#F59E0B" strokeWidth="1.2" className="animate-ping opacity-60" />
+                              <circle r="4" fill="#F59E0B" filter="url(#amberShockGlow)" />
+                            </g>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
               </motion.div>
             )}
 
@@ -1315,41 +2074,166 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               </motion.div>
             )}
 
-            {/* Phase 5c (35s - 45s): Cinematic 6-Metric Sequence (MAE -> MSE -> RMSE -> MAPE -> SMAPE -> MPE) */}
+            {/* Phase 5c (35s - 45s): Cinematic 6-Metric Scoreboard (MAE, MSE, RMSE, MAPE, SMAPE, MPE) */}
             {beatElapsedSeconds >= 35 && beatElapsedSeconds < 45 && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1.0 }}
-                className="text-center flex flex-col items-center gap-4"
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-4xl flex flex-col items-center gap-4 relative z-20 px-4"
               >
-                <div className="text-xs font-mono text-slate-400 uppercase tracking-widest">
-                  Evaluation Across All 6 Required Metrics
+                {/* Header Badge */}
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold tracking-wider uppercase shadow-[0_0_20px_rgba(242,165,65,0.25)]">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  <span>Validation Benchmark · All 6 Evaluated Criteria</span>
                 </div>
-                {beatElapsedSeconds < 37 && (
-                  <div className="text-5xl md:text-7xl font-extralight font-mono text-white">
-                    MAE: <span className="text-[#F2A541] font-normal">20,919</span>
-                  </div>
-                )}
-                {beatElapsedSeconds >= 37 && beatElapsedSeconds < 39 && (
-                  <div className="text-5xl md:text-7xl font-extralight font-mono text-white">
-                    MSE: <span className="text-[#F2A541] font-normal">5.97e8</span>
-                  </div>
-                )}
-                {beatElapsedSeconds >= 39 && beatElapsedSeconds < 41 && (
-                  <div className="text-5xl md:text-7xl font-extralight font-mono text-white">
-                    RMSE: <span className="text-[#F2A541] font-normal">24,426</span>
-                  </div>
-                )}
-                {beatElapsedSeconds >= 41 && beatElapsedSeconds < 43 && (
-                  <div className="text-5xl md:text-7xl font-extralight font-mono text-white">
-                    MAPE: <span className="text-[#F2A541] font-normal">4.71%</span>
-                  </div>
-                )}
-                {beatElapsedSeconds >= 43 && (
-                  <div className="text-5xl md:text-7xl font-extralight font-mono text-white">
-                    SMAPE: <span className="text-[#F2A541] font-normal">4.82%</span>
-                  </div>
-                )}
+
+                <div className="text-center">
+                  <h2 className="text-3xl md:text-5xl font-extralight text-white tracking-tight">
+                    ARIMA (1,1,0) <span className="text-[#F2A541] font-normal">Error Floor</span>
+                  </h2>
+                  <p className="text-xs font-mono text-slate-400 mt-1">
+                    Holdout Evaluation Periods 31–36 (Jul – Dec 2024)
+                  </p>
+                </div>
+
+                {/* 6 High-Impact Neon Metric Cards Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full mt-2">
+                  {/* 1. MAE */}
+                  <motion.div
+                    animate={beatElapsedSeconds < 37 ? { scale: [1, 1.03, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md ${
+                      beatElapsedSeconds < 37
+                        ? 'bg-amber-950/60 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] anim-metric-glow'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+                      ① Mean Absolute Error
+                    </div>
+                    <div className="text-2xl md:text-3xl font-mono font-bold text-white mt-1">
+                      20,919 <span className="text-xs font-normal text-slate-400">TEUs</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 font-bold mt-1">
+                      −24.5% vs Baseline (27,725)
+                    </div>
+                  </motion.div>
+
+                  {/* 2. MSE */}
+                  <motion.div
+                    animate={beatElapsedSeconds >= 37 && beatElapsedSeconds < 38.5 ? { scale: [1, 1.03, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md ${
+                      beatElapsedSeconds >= 37 && beatElapsedSeconds < 38.5
+                        ? 'bg-amber-950/60 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] anim-metric-glow'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+                      ② Mean Squared Error
+                    </div>
+                    <div className="text-2xl md:text-3xl font-mono font-bold text-white mt-1">
+                      5.97 × 10⁸
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 font-bold mt-1">
+                      Lowest Variance Penalty
+                    </div>
+                  </motion.div>
+
+                  {/* 3. RMSE */}
+                  <motion.div
+                    animate={beatElapsedSeconds >= 38.5 && beatElapsedSeconds < 40 ? { scale: [1, 1.03, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md ${
+                      beatElapsedSeconds >= 38.5 && beatElapsedSeconds < 40
+                        ? 'bg-amber-950/60 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] anim-metric-glow'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+                      ③ Root Mean Squared Error
+                    </div>
+                    <div className="text-2xl md:text-3xl font-mono font-bold text-white mt-1">
+                      24,426 <span className="text-xs font-normal text-slate-400">TEUs</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 font-bold mt-1">
+                      Severe Shock Dampened
+                    </div>
+                  </motion.div>
+
+                  {/* 4. MAPE */}
+                  <motion.div
+                    animate={beatElapsedSeconds >= 40 && beatElapsedSeconds < 41.5 ? { scale: [1, 1.03, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md ${
+                      beatElapsedSeconds >= 40 && beatElapsedSeconds < 41.5
+                        ? 'bg-amber-950/60 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] anim-metric-glow'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+                      ④ Mean Absolute % Error
+                    </div>
+                    <div className="text-2xl md:text-3xl font-mono font-bold text-[#F2A541] mt-1">
+                      4.71%
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 font-bold mt-1">
+                      Decisive Leader (&lt; 5.0%)
+                    </div>
+                  </motion.div>
+
+                  {/* 5. SMAPE */}
+                  <motion.div
+                    animate={beatElapsedSeconds >= 41.5 && beatElapsedSeconds < 43 ? { scale: [1, 1.03, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md ${
+                      beatElapsedSeconds >= 41.5 && beatElapsedSeconds < 43
+                        ? 'bg-amber-950/60 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] anim-metric-glow'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+                      ⑤ Symmetric MAPE
+                    </div>
+                    <div className="text-2xl md:text-3xl font-mono font-bold text-white mt-1">
+                      4.82%
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 font-bold mt-1">
+                      Balanced Error Bounds
+                    </div>
+                  </motion.div>
+
+                  {/* 6. MPE */}
+                  <motion.div
+                    animate={beatElapsedSeconds >= 43 ? { scale: [1, 1.03, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.8 }}
+                    className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md ${
+                      beatElapsedSeconds >= 43
+                        ? 'bg-amber-950/60 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] anim-metric-glow'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono tracking-widest text-slate-400 uppercase font-semibold">
+                      ⑥ Mean Percentage Error (Bias)
+                    </div>
+                    <div className="text-2xl md:text-3xl font-mono font-bold text-white mt-1">
+                      +2.43%
+                    </div>
+                    <div className="text-[10px] font-mono text-sky-400 font-bold mt-1">
+                      Minimal Directional Drift
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Subtext Summary */}
+                <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center gap-3">
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Sweep across all 6 criteria
+                  </span>
+                  <span>·</span>
+                  <span>Outperformed RF (8.31%) &amp; Linear Trend (24.15%)</span>
+                </div>
               </motion.div>
             )}
 
