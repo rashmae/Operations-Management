@@ -308,6 +308,43 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
     return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
   };
 
+  // Centered Validation Holdout Data & Coordinates (Periods 31–36: Jul–Dec 2024)
+  const mlHoldoutData = useMemo(() => [
+    { period: 31, month: 'Jul 2024', actual: 445800, arima: 395788, lr: 380816, rf: 365739 },
+    { period: 32, month: 'Aug 2024', actual: 452100, arima: 435086, lr: 404950, rf: 401997 },
+    { period: 33, month: 'Sep 2024', actual: 448700, arima: 449029, lr: 416225, rf: 412902 },
+    { period: 34, month: 'Oct 2024', actual: 455200, arima: 454461, lr: 420463, rf: 433329 },
+    { period: 35, month: 'Nov 2024', actual: 458900, arima: 442723, lr: 414842, rf: 438313 },
+    { period: 36, month: 'Dec 2024', actual: 460304, arima: 427066, lr: 405430, rf: 420364 }
+  ], []);
+
+  // Movement dynamic sequence code requested for visualization rhythm
+  const movementPulseArray = useMemo(() => [4, 6, 5.5, 9, 8, 13, 12.5, 19, 24, 23, 33, 48], []);
+
+  const holdoutSvgW = 860;
+  const holdoutSvgH = 340;
+  const holdoutPadL = 80;
+  const holdoutPadR = 140;
+  const holdoutPadT = 45;
+  const holdoutPadB = 55;
+  const holdoutPlotW = holdoutSvgW - holdoutPadL - holdoutPadR;
+  const holdoutPlotH = holdoutSvgH - holdoutPadT - holdoutPadB;
+  const holdoutMinY = 350000;
+  const holdoutMaxY = 475000;
+
+  const getHoldoutX = (idx: number) => holdoutPadL + (idx / 5) * holdoutPlotW;
+  const getHoldoutY = (val: number) => holdoutPadT + holdoutPlotH - ((val - holdoutMinY) / (holdoutMaxY - holdoutMinY)) * holdoutPlotH;
+
+  const holdoutActualPoints = useMemo(() => mlHoldoutData.map((d, i) => ({ x: getHoldoutX(i), y: getHoldoutY(d.actual), val: d.actual, month: d.month })), [mlHoldoutData]);
+  const holdoutArimaPoints  = useMemo(() => mlHoldoutData.map((d, i) => ({ x: getHoldoutX(i), y: getHoldoutY(d.arima), val: d.arima, month: d.month })), [mlHoldoutData]);
+  const holdoutLrPoints     = useMemo(() => mlHoldoutData.map((d, i) => ({ x: getHoldoutX(i), y: getHoldoutY(d.lr), val: d.lr, month: d.month })), [mlHoldoutData]);
+  const holdoutRfPoints     = useMemo(() => mlHoldoutData.map((d, i) => ({ x: getHoldoutX(i), y: getHoldoutY(d.rf), val: d.rf, month: d.month })), [mlHoldoutData]);
+
+  const holdoutActualPath = useMemo(() => holdoutActualPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '), [holdoutActualPoints]);
+  const holdoutArimaPath  = useMemo(() => holdoutArimaPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '), [holdoutArimaPoints]);
+  const holdoutLrPath     = useMemo(() => holdoutLrPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '), [holdoutLrPoints]);
+  const holdoutRfPath     = useMemo(() => holdoutRfPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '), [holdoutRfPoints]);
+
   // Active decomposition component in Beat 1 (either manually chosen or auto-sequenced)
   const activeBeat1Component = useMemo(() => {
     if (beat1SelectedComponent) return beat1SelectedComponent;
@@ -646,7 +683,7 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                     Applied Study 1 · IE-PC 3112: Operations Management 1
                   </div>
                   <h1 className="text-3xl md:text-5xl font-light text-white tracking-tight">
-                    Together, they are <span className="font-bold text-sky-400">Group 7</span> (Section D10)
+                    Together, we are <span className="font-bold text-sky-400">Group 7</span> (Section D10)
                   </h1>
                   <p className="text-xs md:text-sm font-sans text-slate-300 max-w-2xl mx-auto">
                     "Turning 36 Months of Port Data into High-Confidence Terminal Operations."
@@ -1737,25 +1774,118 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               </motion.div>
             )}
 
-            {/* Model 4: TREND (27s - 35s) — Contrast: irregular vs straight line */}
+            {/* Model 4: TREND PROJECTION / LINEAR TIME REGRESSION (27s - 35s) — Contrast: irregular vs straight line */}
             {beatElapsedSeconds >= 27 && (
               <motion.div
                 key="trend"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 1.0 }}
-                className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center"
+                transition={{ duration: 0.8 }}
+                className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center px-4"
               >
-                <h2 className="text-5xl md:text-7xl font-extralight text-slate-100 tracking-wider mb-2">
-                  TREND
-                </h2>
-                <div className="text-xs font-mono text-slate-400 mb-6 tracking-widest uppercase">
-                  Rigid Linear Fit
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                  <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+                  <span>Rigid Linear Approximation · Operational Hazard</span>
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 md:h-56">
-                  <path d={toPath(trendPoints)} fill="none" stroke="#64748B" strokeWidth="2.5" strokeDasharray="4 4" strokeLinecap="round" />
-                </svg>
+                <h2 className="text-4xl md:text-6xl font-extralight text-slate-100 tracking-wider mb-1">
+                  TREND PROJECTION
+                </h2>
+                <div className="text-xs sm:text-sm font-mono text-[#F2A541] mb-4 tracking-widest uppercase font-semibold">
+                  Linear Time Regression · Rigid Linear Fit (r = −0.39, −2,216 TEUs/mo)
+                </div>
+
+                {/* Live Animated Graph Container with Grid, Contrast & Scanning Laser */}
+                <div className="relative w-full rounded-2xl bg-slate-950/80 border border-slate-800/80 p-4 shadow-2xl backdrop-blur-md overflow-hidden">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-48 md:h-60 overflow-visible">
+                    <defs>
+                      <linearGradient id="trendLaserGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.8" />
+                        <stop offset="50%" stopColor="#FB7185" stopOpacity="1" />
+                        <stop offset="100%" stopColor="#FDA4AF" stopOpacity="0.8" />
+                      </linearGradient>
+                      <filter id="laserGlowTrend" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+
+                    {/* Subtle Gridlines */}
+                    {[250000, 350000, 450000].map(v => (
+                      <line
+                        key={v}
+                        x1={padLeft}
+                        y1={getY(v)}
+                        x2={svgWidth - padRight}
+                        y2={getY(v)}
+                        stroke="#1E293B"
+                        strokeDasharray="4 4"
+                      />
+                    ))}
+
+                    {/* Actual Volatile Port Series in Faint Ghost Cyan (To show extreme contrast with straight line) */}
+                    <path
+                      d={actualPathString}
+                      fill="none"
+                      stroke="#38BDF8"
+                      strokeWidth="2"
+                      strokeOpacity="0.45"
+                      strokeDasharray="4 4"
+                    />
+
+                    {/* Live Moving Rigid Trend Projection Line */}
+                    <path
+                      d={toPath(trendPoints)}
+                      fill="none"
+                      stroke="url(#trendLaserGrad)"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      filter="url(#laserGlowTrend)"
+                      className="anim-flow-trend"
+                      style={{ strokeDasharray: '12 8' }}
+                    />
+
+                    {/* Moving Laser Scanner Pulse traveling along the line */}
+                    {(() => {
+                      const tNorm = ((beatElapsedSeconds - 27) % 3) / 3;
+                      const pX = trendPoints[0].x + tNorm * (trendPoints[1].x - trendPoints[0].x);
+                      const pY = trendPoints[0].y + tNorm * (trendPoints[1].y - trendPoints[0].y);
+                      const currentVal = Math.round(409404 - 2216 * (1 + tNorm * 35));
+                      return (
+                        <g>
+                          <circle cx={pX} cy={pY} r="8" fill="#F43F5E" className="animate-ping opacity-75" />
+                          <circle cx={pX} cy={pY} r="5" fill="#FFE4E6" stroke="#F43F5E" strokeWidth="2" />
+                          <line x1={pX} y1={padTop} x2={pX} y2={padTop + plotH} stroke="#F43F5E" strokeOpacity="0.3" strokeDasharray="2 2" />
+                          <rect x={pX - 60} y={pY - 32} width="120" height="22" rx="4" fill="#0F172A" stroke="#F43F5E" strokeWidth="1" />
+                          <text x={pX} y={pY - 17} textAnchor="middle" fill="#FDA4AF" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                            {currentVal.toLocaleString()} TEUs
+                          </text>
+                        </g>
+                      );
+                    })()}
+
+                    {/* Start and End Callout Pins */}
+                    <circle cx={trendPoints[0].x} cy={trendPoints[0].y} r="5" fill="#FB7185" />
+                    <text x={trendPoints[0].x} y={trendPoints[0].y - 12} textAnchor="start" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                      Jan 2022: 409,404 TEUs
+                    </text>
+
+                    <circle cx={trendPoints[1].x} cy={trendPoints[1].y} r="5" fill="#FB7185" />
+                    <text x={trendPoints[1].x} y={trendPoints[1].y + 20} textAnchor="end" fill="#F43F5E" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      Dec 2024: 331,833 TEUs (Misses 460k actual by -128k!)
+                    </text>
+                  </svg>
+
+                  {/* Operational Summary Callout */}
+                  <div className="flex flex-wrap items-center justify-between text-xs font-mono pt-3 border-t border-slate-800/80 text-slate-400">
+                    <span className="text-rose-400 font-semibold">Equation: ŷ = 409,404 − 2,216 · t</span>
+                    <span className="text-slate-300">Negative slope reflects 2022 destocking only</span>
+                    <span className="text-amber-300 font-bold">MAE: 107,737 TEUs (Catastrophic 24.15% MAPE)</span>
+                  </div>
+                </div>
               </motion.div>
             )}
 
@@ -1808,7 +1938,7 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               </motion.div>
             )}
 
-            {/* Visual 2 (15s - 30s): Minimal error indicators MAE -> RMSE -> MAPE -> SMAPE */}
+            {/* Visual 2 (15s - 30s): Minimal error indicators MAE -> MSE -> RMSE -> MPE -> MAPE -> SMAPE */}
             {beatElapsedSeconds >= 15 && (
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
@@ -1818,19 +1948,33 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                 className="text-center flex flex-col items-center gap-6"
               >
                 <div className="text-xs font-mono uppercase tracking-[0.3em] text-slate-400">
-                  Development Period Evaluator
+                  Development Period Evaluator · 6 Official Metrics
                 </div>
-                <div className="flex items-center gap-6 md:gap-10 text-xl md:text-3xl font-light font-mono text-slate-300">
-                  <span className={beatElapsedSeconds < 19 ? 'text-[#F2A541] font-bold' : 'text-slate-400'}>MAE</span>
-                  <span>·</span>
-                  <span className={beatElapsedSeconds >= 19 && beatElapsedSeconds < 23 ? 'text-[#F2A541] font-bold' : 'text-slate-400'}>RMSE</span>
-                  <span>·</span>
-                  <span className={beatElapsedSeconds >= 23 && beatElapsedSeconds < 27 ? 'text-[#F2A541] font-bold' : 'text-slate-400'}>MAPE</span>
-                  <span>·</span>
-                  <span className={beatElapsedSeconds >= 27 ? 'text-[#F2A541] font-bold' : 'text-slate-400'}>SMAPE</span>
+                <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 md:gap-8 text-xl sm:text-2xl md:text-3xl font-light font-mono text-slate-300">
+                  <span className={beatElapsedSeconds < 17.5 ? 'text-[#F2A541] font-bold drop-shadow-[0_0_10px_rgba(242,165,65,0.7)]' : 'text-slate-400'}>MAE</span>
+                  <span className="text-slate-600">·</span>
+                  <span className={beatElapsedSeconds >= 17.5 && beatElapsedSeconds < 20 ? 'text-[#F2A541] font-bold drop-shadow-[0_0_10px_rgba(242,165,65,0.7)]' : 'text-slate-400'}>MSE</span>
+                  <span className="text-slate-600">·</span>
+                  <span className={beatElapsedSeconds >= 20 && beatElapsedSeconds < 22.5 ? 'text-[#F2A541] font-bold drop-shadow-[0_0_10px_rgba(242,165,65,0.7)]' : 'text-slate-400'}>RMSE</span>
+                  <span className="text-slate-600">·</span>
+                  <span className={beatElapsedSeconds >= 22.5 && beatElapsedSeconds < 25 ? 'text-[#F2A541] font-bold drop-shadow-[0_0_10px_rgba(242,165,65,0.7)]' : 'text-slate-400'}>MPE</span>
+                  <span className="text-slate-600">·</span>
+                  <span className={beatElapsedSeconds >= 25 && beatElapsedSeconds < 27.5 ? 'text-[#F2A541] font-bold drop-shadow-[0_0_10px_rgba(242,165,65,0.7)]' : 'text-slate-400'}>MAPE</span>
+                  <span className="text-slate-600">·</span>
+                  <span className={beatElapsedSeconds >= 27.5 ? 'text-[#F2A541] font-bold drop-shadow-[0_0_10px_rgba(242,165,65,0.7)]' : 'text-slate-400'}>SMAPE</span>
                 </div>
-                <div className="text-xs font-mono text-slate-500 mt-2">
-                  (Pre-Validation Baseline · Not Final Winner)
+                <div className="flex flex-col items-center gap-1">
+                  <div className="text-xs sm:text-sm font-mono text-[#F2A541] font-semibold">
+                    {beatElapsedSeconds < 17.5 && 'Mean Absolute Error (Average Deviation in TEUs)'}
+                    {beatElapsedSeconds >= 17.5 && beatElapsedSeconds < 20 && 'Mean Squared Error (Quadratically Weighted Variance)'}
+                    {beatElapsedSeconds >= 20 && beatElapsedSeconds < 22.5 && 'Root Mean Squared Error (Outlier-Sensitive Metric)'}
+                    {beatElapsedSeconds >= 22.5 && beatElapsedSeconds < 25 && 'Mean Percentage Error (Directional Bias: Under/Over)'}
+                    {beatElapsedSeconds >= 25 && beatElapsedSeconds < 27.5 && 'Mean Absolute Percentage Error (Executive Benchmark)'}
+                    {beatElapsedSeconds >= 27.5 && 'Symmetric MAPE (Bounded Relative Benchmark)'}
+                  </div>
+                  <div className="text-xs font-mono text-slate-500">
+                    (Pre-Validation Baseline · Not Final Winner)
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1847,17 +1991,17 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               <img src={OPERATIONS_COMMAND_IMG} alt="Operations Command" className="w-full h-full object-cover" />
             </div>
 
-            {/* Model 1: ARIMA + macOS Python Code Sandbox (Inspired by Video 1) */}
+            {/* Model 1: ARIMA + macOS Terminal with 'kind' text effects (Inspired by 21st terminal & Instructor Code 14) */}
             {beatElapsedSeconds < 16 && (
               <motion.div
                 key="arima_terminal"
                 initial={{ opacity: 0, z: -80, scale: 0.92 }}
                 animate={{ opacity: 1, z: 0, scale: 1.0 }}
                 exit={{ opacity: 0, z: 50 }}
-                transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-                className="relative z-10 w-full max-w-3xl flex flex-col items-center"
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 w-full max-w-3xl flex flex-col items-center px-4"
               >
-                {/* macOS Style Code Terminal Window (like Video 1) */}
+                {/* macOS Style Code Terminal Window */}
                 <div className="w-full rounded-2xl bg-slate-950/95 border border-sky-500/40 shadow-2xl overflow-hidden backdrop-blur-xl">
                   {/* Window Titlebar */}
                   <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
@@ -1867,17 +2011,52 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                       <span className="w-3 h-3 rounded-full bg-emerald-500/90" />
                     </div>
                     <span className="text-[11px] font-mono text-slate-400">arima_optimization.py — Instructor Code 14</span>
-                    <span className="text-[10px] font-mono text-sky-400 font-bold">AIC: 701.43</span>
+                    <span className="text-[10px] font-mono text-sky-400 font-bold px-2 py-0.5 rounded bg-sky-950/80 border border-sky-800">AIC: 701.43</span>
                   </div>
 
-                  {/* Terminal Code Body */}
-                  <div className="p-4 font-mono text-xs md:text-sm text-slate-300 space-y-1.5 text-left leading-relaxed">
-                    <p><span className="text-sky-400 font-bold">from</span> statsmodels.tsa.arima.model <span className="text-sky-400 font-bold">import</span> ARIMA</p>
-                    <p><span className="text-slate-500"># Fit Order (p=1, d=1, q=0) with 1st Differencing</span></p>
-                    <p>model = ARIMA(pola_train, order=(<span className="text-amber-400 font-bold">1, 1, 0</span>))</p>
-                    <p>result = model.fit()</p>
+                  {/* Terminal Code Body with kind-based lively styling */}
+                  <div className="p-4 md:p-5 font-mono text-xs md:text-sm text-slate-300 space-y-2 text-left leading-relaxed">
+                    {/* Line 1: cmd */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sky-400 font-bold select-none">$</span>
+                      <span className="text-white font-semibold">python -m statsmodels.tsa.arima --order=(1,1,0) --data=pola_export_teus.csv</span>
+                    </div>
+
+                    {/* Line 2: dim */}
+                    {beatElapsedSeconds >= 2.5 && (
+                      <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="text-slate-400 text-xs flex items-center gap-2 pl-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
+                        <span>Checking stationarity: Augmented Dickey-Fuller p = 0.0024 -&gt; 1st differencing (d=1) confirmed.</span>
+                      </motion.div>
+                    )}
+
+                    {/* Line 3: dim */}
+                    {beatElapsedSeconds >= 5.5 && (
+                      <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="text-slate-400 text-xs flex items-center gap-2 pl-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                        <span>Estimating autoregressive parameter: AR(1) ϕ₁ = +0.548 (p &lt; 0.001, z = 4.12).</span>
+                      </motion.div>
+                    )}
+
+                    {/* Line 4: ok */}
+                    {beatElapsedSeconds >= 8.5 && (
+                      <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="text-emerald-400 font-semibold text-xs flex items-center gap-2 pl-3 bg-emerald-950/30 py-1 px-2 rounded border border-emerald-500/30">
+                        <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/30 text-emerald-300 flex items-center justify-center text-[10px] font-bold">✓</span>
+                        <span>Created 1 optimal model: ARIMA(1,1,0) established -&gt; Lowest AIC: 701.43 (vs 714.2 for AR2)</span>
+                      </motion.div>
+                    )}
+
+                    {/* Line 5: cmd */}
+                    {beatElapsedSeconds >= 11.5 && (
+                      <motion.div initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2 pt-1 border-t border-slate-800/80">
+                        <span className="text-amber-400 font-bold select-none">&gt;</span>
+                        <span className="text-amber-300 font-semibold">model.forecast(steps=6) -&gt; Holdout Validation Horizon (Jul–Dec 2024)</span>
+                        <span className="text-[#F2A541] font-bold animate-pulse">▌</span>
+                      </motion.div>
+                    )}
                     
-                    <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-3 text-[11px]">
+                    {/* Metrics Footer Badges */}
+                    <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center gap-3 text-[11px]">
                       <span className="text-emerald-400 font-bold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" /> Stationary (d=1)
                       </span>
@@ -1891,61 +2070,186 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                   </div>
                 </div>
 
-                <div className="text-xl md:text-2xl font-mono text-[#F2A541] mt-3 font-bold">
-                  ARIMA (1, 1, 0)
+                <div className="text-xl md:text-2xl font-mono text-[#F2A541] mt-3 font-bold flex items-center gap-2">
+                  <span>ARIMA (1, 1, 0)</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold">Primary Contender</span>
                 </div>
               </motion.div>
             )}
 
-            {/* Model 2: Linear Regression (16s - 26s) */}
+            {/* Model 2: Lagged Linear Regression (16s - 26s) — Centered and Lively */}
             {beatElapsedSeconds >= 16 && beatElapsedSeconds < 26 && (
               <motion.div
                 key="lr"
-                initial={{ opacity: 0, z: -80, scale: 0.92 }}
+                initial={{ opacity: 0, z: -60, scale: 0.94 }}
                 animate={{ opacity: 1, z: 0, scale: 1.0 }}
                 exit={{ opacity: 0, z: 50 }}
-                transition={{ duration: 1.0 }}
-                className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center"
+                transition={{ duration: 0.8 }}
+                className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center px-4"
               >
-                <h2 className="text-5xl md:text-7xl font-extralight text-slate-100 tracking-wider mb-2">
-                  LINEAR REGRESSION
-                </h2>
-                <div className="text-xs font-mono text-sky-400 mb-6 tracking-widest uppercase">
-                  Lagged Autoregressive Predictor
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/30 text-sky-300 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+                  <span>Autoregressive Linear Predictor · AR(1)–AR(3)</span>
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 md:h-56">
-                  <path d={toPath(valLrPoints)} fill="none" stroke="#1B6CA8" strokeWidth="3" strokeLinecap="round" />
-                </svg>
+                <h2 className="text-3xl md:text-5xl font-extralight text-white tracking-tight">
+                  LAGGED LINEAR REGRESSION
+                </h2>
+                <div className="text-xs sm:text-sm font-mono text-sky-400 mb-3 tracking-widest uppercase font-semibold">
+                  Centered Holdout Horizon · Periods 31–36 (Jul–Dec 2024)
+                </div>
+
+                {/* Centered Large SVG Line Graph */}
+                <div className="relative w-full rounded-2xl bg-slate-950/80 border border-slate-800 p-4 shadow-2xl backdrop-blur-md overflow-hidden">
+                  {/* AR Inputs Bar */}
+                  <div className="flex items-center justify-center gap-4 text-xs font-mono text-slate-400 pb-2 border-b border-slate-800/80">
+                    <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-sky-300">Lag 1: Y_(t-1)</span>
+                    <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-sky-300">Lag 2: Y_(t-2)</span>
+                    <span className="px-2.5 py-1 rounded bg-slate-900 border border-slate-700 text-sky-300">Lag 3: Y_(t-3)</span>
+                    <span className="text-slate-500">→ Linear Weighted Sum</span>
+                  </div>
+
+                  <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-48 md:h-60 overflow-visible">
+                    {/* Y Gridlines */}
+                    {[380000, 410000, 440000, 470000].map(v => (
+                      <g key={v}>
+                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#1E293B" strokeDasharray="3 3" />
+                        <text x={holdoutPadL - 10} y={getHoldoutY(v) + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
+                          {(v / 1000).toFixed(0)}k
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* Actual trajectory in ghost white */}
+                    <path d={holdoutActualPath} fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeDasharray="4 4" strokeOpacity="0.4" />
+                    
+                    {/* Lively Lagged LR Line */}
+                    <path
+                      d={holdoutLrPath}
+                      fill="none"
+                      stroke="#38BDF8"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      className="anim-neon-sma"
+                    />
+
+                    {/* Nodes along the LR path */}
+                    {holdoutLrPoints.map((pt, i) => (
+                      <g key={i}>
+                        <circle cx={pt.x} cy={pt.y} r="5" fill="#38BDF8" stroke="#0F172A" strokeWidth="2" />
+                        <text x={pt.x} y={pt.y - 10} textAnchor="middle" fill="#7DD3FC" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                          {(pt.val / 1000).toFixed(0)}k
+                        </text>
+                        {/* X Axis Labels */}
+                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 20} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                          {pt.month}
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* End Callout Badge */}
+                    <text x={holdoutLrPoints[5].x + 12} y={holdoutLrPoints[5].y + 4} textAnchor="start" fill="#38BDF8" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      Lagged LR: 405k
+                    </text>
+                  </svg>
+
+                  {/* Summary Card */}
+                  <div className="flex flex-wrap items-center justify-between text-xs font-mono pt-3 border-t border-slate-800/80 text-slate-400">
+                    <span className="text-sky-300 font-semibold">MAE: 37,990 TEUs · MAPE: 8.48%</span>
+                    <span className="text-amber-300">Under-forecasting bias (+8.48% MPE)</span>
+                    <span className="text-slate-400">Rank #7 of 9 Contenders</span>
+                  </div>
+                </div>
               </motion.div>
             )}
 
-            {/* Model 3: Random Forest abstract decision nodes (26s - 34s) */}
+            {/* Model 3: Random Forest Regression (26s - 34s) — Centered and Lively */}
             {beatElapsedSeconds >= 26 && beatElapsedSeconds < 34 && (
               <motion.div
                 key="rf"
-                initial={{ opacity: 0, z: -80, scale: 0.92 }}
+                initial={{ opacity: 0, z: -60, scale: 0.94 }}
                 animate={{ opacity: 1, z: 0, scale: 1.0 }}
                 exit={{ opacity: 0, z: 50 }}
-                transition={{ duration: 1.0 }}
-                className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center"
+                transition={{ duration: 0.8 }}
+                className="relative z-10 w-full max-w-4xl flex flex-col items-center text-center px-4"
               >
-                <h2 className="text-5xl md:text-7xl font-extralight text-slate-100 tracking-wider mb-2">
-                  RANDOM FOREST
-                </h2>
-                {/* Abstract Structured Decision Blocks */}
-                <div className="flex items-center gap-3 my-4">
-                  {Array.from({ length: 7 }).map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -6, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                      className="w-4 h-6 rounded bg-[#1B6CA8] border border-sky-400/40"
-                    />
-                  ))}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/30 text-purple-300 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+                  <span>Machine Learning Ensemble · 100 Regression Trees</span>
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-44 md:h-56">
-                  <path d={toPath(valRfPoints)} fill="none" stroke="#64748B" strokeWidth="2.5" strokeDasharray="3 3" strokeLinecap="round" />
-                </svg>
+                <h2 className="text-3xl md:text-5xl font-extralight text-white tracking-tight">
+                  RANDOM FOREST REGRESSION
+                </h2>
+                <div className="text-xs sm:text-sm font-mono text-purple-400 mb-3 tracking-widest uppercase font-semibold">
+                  Centered Holdout Horizon · Periods 31–36 (Jul–Dec 2024)
+                </div>
+
+                {/* Centered Large SVG Line Graph */}
+                <div className="relative w-full rounded-2xl bg-slate-950/80 border border-slate-800 p-4 shadow-2xl backdrop-blur-md overflow-hidden">
+                  {/* Decision Tree Nodes Animation */}
+                  <div className="flex items-center justify-center gap-2 py-1 border-b border-slate-800/80">
+                    <span className="text-[11px] font-mono text-slate-400 mr-2">100 Trees Ensembled:</span>
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        animate={{ opacity: [0.3, 1, 0.3], y: [0, -5, 0] }}
+                        transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.15 }}
+                        className="w-3.5 h-5 rounded bg-purple-900/80 border border-purple-400/60"
+                      />
+                    ))}
+                    <span className="text-[11px] font-mono text-purple-300 ml-2">→ Bootstrapped Average</span>
+                  </div>
+
+                  <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-48 md:h-60 overflow-visible">
+                    {/* Y Gridlines */}
+                    {[380000, 410000, 440000, 470000].map(v => (
+                      <g key={v}>
+                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#1E293B" strokeDasharray="3 3" />
+                        <text x={holdoutPadL - 10} y={getHoldoutY(v) + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
+                          {(v / 1000).toFixed(0)}k
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* Actual trajectory in ghost white */}
+                    <path d={holdoutActualPath} fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeDasharray="4 4" strokeOpacity="0.4" />
+                    
+                    {/* Lively Random Forest Line */}
+                    <path
+                      d={holdoutRfPath}
+                      fill="none"
+                      stroke="#C084FC"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      style={{ filter: 'drop-shadow(0 0 8px rgba(192,132,252,0.6))' }}
+                    />
+
+                    {/* Nodes along the RF path */}
+                    {holdoutRfPoints.map((pt, i) => (
+                      <g key={i}>
+                        <circle cx={pt.x} cy={pt.y} r="5" fill="#C084FC" stroke="#0F172A" strokeWidth="2" />
+                        <text x={pt.x} y={pt.y - 10} textAnchor="middle" fill="#E9D5FF" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                          {(pt.val / 1000).toFixed(0)}k
+                        </text>
+                        {/* X Axis Labels */}
+                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 20} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                          {pt.month}
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* End Callout Badge */}
+                    <text x={holdoutRfPoints[5].x + 12} y={holdoutRfPoints[5].y + 4} textAnchor="start" fill="#C084FC" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      Random Forest: 420k
+                    </text>
+                  </svg>
+
+                  {/* Summary Card */}
+                  <div className="flex flex-wrap items-center justify-between text-xs font-mono pt-3 border-t border-slate-800/80 text-slate-400">
+                    <span className="text-purple-300 font-semibold">MAE: 37,138 TEUs · MAPE: 8.31%</span>
+                    <span className="text-amber-300">Falls behind 4 conventional models (n=30 sample size limit)</span>
+                    <span className="text-slate-400">Rank #6 of 9 Contenders</span>
+                  </div>
+                </div>
               </motion.div>
             )}
 
@@ -1970,57 +2274,181 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
         {/* BEAT 5 (2:50 - 3:45 · 55s): FINAL VALIDATION COMPARISON (GREEN MASCOT INSPECTS) */}
         {/* ============================================================== */}
         {currentBeatIndex === 5 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 md:p-10 z-10 overflow-hidden">
-            {/* Phase 5a (0s - 15s): Actual vs Forecast trajectories in validation holdout */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 z-10 overflow-hidden">
+            {/* Phase 5a (0s - 15s): 3 Models (ARIMA, Lagged LR, Random Forest) Overlapped on Actuals + Movement Dynamics */}
             {beatElapsedSeconds < 15 && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full max-w-4xl flex flex-col items-center text-center"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1.0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-5xl flex flex-col items-center text-center px-4"
               >
-                <div className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-4">
-                  Validation Holdout · Periods 31–36
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                  <span className="w-2 h-2 rounded-full bg-[#F2A541] animate-ping" />
+                  <span>Validation Holdout Arena · Periods 31–36 (Jul – Dec 2024)</span>
                 </div>
-                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-56 md:h-64 overflow-visible">
-                  {/* Actual Validation Curve */}
-                  <path
-                    d={toPath(actualPoints.slice(30))}
-                    fill="none"
-                    stroke="#F8FAFC"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                  {/* ARIMA Forecast Curve */}
-                  <path
-                    d={toPath(valArimaPoints)}
-                    fill="none"
-                    stroke="#1B6CA8"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <h2 className="text-3xl md:text-5xl font-extralight text-white tracking-tight">
+                  STATISTICAL VS MACHINE LEARNING
+                </h2>
+                <div className="text-xs sm:text-sm font-mono text-slate-400 mb-3 tracking-widest uppercase">
+                  All 3 Contenders Overlapped on Unseen Validation Trajectory
+                </div>
+
+                {/* Centered Large SVG Line Graph with All 3 Models + Actuals */}
+                <div className="relative w-full rounded-2xl bg-slate-950/85 border border-slate-800 p-4 shadow-2xl backdrop-blur-md overflow-hidden">
+                  <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-52 md:h-64 overflow-visible">
+                    {/* Y Gridlines */}
+                    {[380000, 410000, 440000, 470000].map(v => (
+                      <g key={v}>
+                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#1E293B" strokeDasharray="3 3" />
+                        <text x={holdoutPadL - 10} y={getHoldoutY(v) + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
+                          {(v / 1000).toFixed(0)}k
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* 1. Actual Validation Curve in Bold White */}
+                    <path
+                      d={holdoutActualPath}
+                      fill="none"
+                      stroke="#F8FAFC"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.7))' }}
+                    />
+
+                    {/* 2. ARIMA (1,1,0) Curve in Glowing Amber (WINNER) */}
+                    <path
+                      d={holdoutArimaPath}
+                      fill="none"
+                      stroke="#F2A541"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      className="anim-neon-ets"
+                    />
+
+                    {/* 3. Random Forest Curve in Purple */}
+                    <path
+                      d={holdoutRfPath}
+                      fill="none"
+                      stroke="#C084FC"
+                      strokeWidth="2.5"
+                      strokeDasharray="5 3"
+                      strokeLinecap="round"
+                    />
+
+                    {/* 4. Lagged Linear Regression Curve in Sky Blue */}
+                    <path
+                      d={holdoutLrPath}
+                      fill="none"
+                      stroke="#38BDF8"
+                      strokeWidth="2.5"
+                      strokeDasharray="3 3"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Data Points on Actual */}
+                    {holdoutActualPoints.map((pt, i) => (
+                      <g key={i}>
+                        <rect x={pt.x - 3.5} y={pt.y - 3.5} width="7" height="7" fill="#F8FAFC" transform={`rotate(45 ${pt.x} ${pt.y})`} />
+                        {/* Month X-Axis Label */}
+                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 20} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                          {pt.month}
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* Direct Right-Hand Labels at Period 36 */}
+                    <g transform={`translate(${holdoutActualPoints[5].x + 12}, 0)`}>
+                      <text y={holdoutActualPoints[5].y + 4} fill="#F8FAFC" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                        Actual: 460k
+                      </text>
+                      <text y={holdoutArimaPoints[5].y + 4} fill="#F2A541" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                        ★ ARIMA: 427k (20,919 MAE)
+                      </text>
+                      <text y={holdoutRfPoints[5].y + 4} fill="#C084FC" fontSize="10" fontFamily="monospace">
+                        RF: 420k (37k MAE)
+                      </text>
+                      <text y={holdoutLrPoints[5].y + 4} fill="#38BDF8" fontSize="10" fontFamily="monospace">
+                        LR: 405k (38k MAE)
+                      </text>
+                    </g>
+                  </svg>
+
+                  {/* Graph Movement Dynamics Code Visualization (Equalizer Volatility Rhythm) */}
+                  <div className="flex items-end justify-center gap-1.5 sm:gap-2 h-10 py-1.5 border-t border-slate-800/80 bg-slate-900/40 rounded-lg px-3 mt-2">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase mr-2 flex items-center gap-1">
+                      <Activity className="w-3.5 h-3.5 text-amber-400" />
+                      Volatility Rhythm:
+                    </span>
+                    {movementPulseArray.map((val, idx) => {
+                      const heightPct = Math.min(100, Math.max(15, (val / 48) * 100));
+                      return (
+                        <motion.div
+                          key={idx}
+                          animate={{
+                            height: [`${heightPct * 0.5}%`, `${heightPct}%`, `${heightPct * 0.7}%`]
+                          }}
+                          transition={{
+                            duration: 1.4,
+                            repeat: Infinity,
+                            delay: idx * 0.08,
+                            ease: 'easeInOut'
+                          }}
+                          className="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-[#1B6CA8] via-sky-400 to-[#F2A541] shadow-[0_0_8px_rgba(242,165,65,0.4)]"
+                          title={`Step ${idx + 1}: ${val}`}
+                        />
+                      );
+                    })}
+                    <span className="text-[10px] font-mono text-amber-300 font-bold ml-2">
+                      ARIMA Differencing Absorbs Dynamic Velocity
+                    </span>
+                  </div>
+
+                  {/* Bottom Legend */}
+                  <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-mono pt-2 text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-1 bg-white rounded" />
+                      <span className="font-bold text-white">Actual Data (445k–460k)</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-1 bg-[#F2A541] rounded" />
+                      <span className="font-bold text-[#F2A541]">ARIMA (1,1,0) · 20,919 MAE (Winner)</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-1 bg-purple-400 rounded" />
+                      <span className="text-purple-300">Random Forest · 37,138 MAE</span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-1 bg-sky-400 rounded" />
+                      <span className="text-sky-300">Lagged LR · 37,990 MAE</span>
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             )}
 
-            {/* Phase 5b (15s - 35s): MORPH 5 — 3D Vertical Bar Ranking by MAE; ARIMA turns amber */}
+            {/* Phase 5b (15s - 35s): MORPH 5 — 3D Vertical Bar Ranking by MAE; Centered and Fully Visible */}
             {beatElapsedSeconds >= 15 && beatElapsedSeconds < 35 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="w-full max-w-3xl flex flex-col gap-3 relative"
+                className="w-full max-w-3xl flex flex-col gap-3 relative mx-auto px-4"
               >
                 <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                    Validation Ranking by MAE
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-mono text-slate-300 uppercase tracking-wider font-bold">
+                      Validation Ranking by Out-of-Sample MAE
+                    </span>
+                  </div>
                   {beatElapsedSeconds >= 27 && (
                     <motion.div 
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="text-lg font-mono font-bold text-[#F2A541]"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-sm md:text-base font-mono font-bold text-[#F2A541] px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30"
                     >
-                      20,919 MAE (Winner)
+                      ARIMA #1: 20,919 MAE (Winner)
                     </motion.div>
                   )}
                 </div>
@@ -2032,8 +2460,8 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                     const barWidth = Math.min(100, (item.mae / maxMAE) * 100);
                     return (
                       <div key={item.name} className="flex items-center gap-3 text-xs font-mono">
-                        <span className="w-6 text-slate-500">#{item.rank}</span>
-                        <span className={`w-44 text-right truncate ${isArima && beatElapsedSeconds >= 25 ? 'text-[#F2A541] font-bold' : 'text-slate-300'}`}>
+                        <span className="w-6 text-slate-500 font-bold">#{item.rank}</span>
+                        <span className={`w-40 sm:w-48 text-right truncate ${isArima && beatElapsedSeconds >= 25 ? 'text-[#F2A541] font-bold' : 'text-slate-300'}`}>
                           {item.name}
                         </span>
                         {/* 3D Extruded Bar */}
@@ -2057,19 +2485,24 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                   })}
                 </div>
 
-                {/* Green Validator Mascot Inspecting with Magnifying Glass */}
+                {/* Green Validator Mascot in Neat Responsive Corner Header */}
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
+                  animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute -top-12 -right-8 hidden md:flex items-center gap-2 p-2 rounded-2xl bg-slate-950/90 border border-emerald-500/50 shadow-2xl backdrop-blur-md"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/90 border border-emerald-500/40 shadow-xl backdrop-blur-md mt-1"
                 >
-                  <div className="w-12 h-12 rounded-xl overflow-hidden border border-emerald-400 bg-[#0B2545]">
-                    <img src={MASCOT_GREEN} alt="Green Mascot" className="w-full h-full object-contain" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-emerald-400 bg-[#0B2545] p-0.5">
+                      <img src={MASCOT_GREEN} alt="Green Mascot" className="w-full h-full object-contain" />
+                    </div>
+                    <div className="text-[11px] font-mono text-left">
+                      <div className="text-emerald-300 font-bold">Validation Inspector Sign-Off</div>
+                      <div className="text-slate-400">Verified: ARIMA (1,1,0) outperforms ML by 16,219 TEUs</div>
+                    </div>
                   </div>
-                  <div className="text-[10px] font-mono text-left pr-2">
-                    <div className="text-emerald-300 font-bold">Validation Inspector</div>
-                    <div className="text-slate-400">Verifying 20,919 Error Floor</div>
-                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    PARSIMONY WINS
+                  </span>
                 </motion.div>
               </motion.div>
             )}
@@ -2299,23 +2732,117 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
               </motion.div>
             )}
 
-            {/* Phase 6b (14s - 24s): Buffer Concept — ARIMA Forecast -> Safety Buffer -> Operational Plan */}
+            {/* Phase 6b (14s - 24s): Capacity Commitment Protocol — 3-Step Action & Note Motion Cards */}
             {beatElapsedSeconds >= 14 && beatElapsedSeconds < 24 && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center z-10 flex flex-col items-center gap-6"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1.0 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.7 }}
+                className="text-center z-10 flex flex-col items-center gap-5 w-full max-w-4xl px-4"
               >
-                <div className="text-xs font-mono uppercase tracking-[0.3em] text-slate-400">
-                  Capacity Commitment Protocol
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-[#F2A541] animate-ping" />
+                  <span>Operations Management Protocol · 3-Step Execution Framework</span>
                 </div>
-                <div className="flex flex-col items-center gap-3 text-lg md:text-2xl font-light">
-                  <span className="text-slate-300">ARIMA (1,1,0) Primary</span>
-                  <span className="text-slate-500">↓</span>
-                  <span className="text-[#F2A541] font-mono font-bold">+5% Flexible Buffer (Up to 10%)</span>
-                  <span className="text-slate-500">↓</span>
-                  <span className="text-emerald-400 font-semibold">Berth &amp; Labor Dispatch (ETS Backup)</span>
+
+                <div className="text-center">
+                  <h2 className="text-3xl md:text-5xl font-extralight text-white tracking-tight">
+                    CAPACITY COMMITMENT PROTOCOL
+                  </h2>
+                  <p className="text-xs sm:text-sm font-mono text-slate-400 mt-1">
+                    Converting Statistical Forecast into Physical Port Operations
+                  </p>
+                </div>
+
+                {/* 3-Step Action & Note Motion Cards (Inspired by Reference Workflow Effect) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 w-full mt-2">
+                  {/* Step 1: Gather Context */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 }}
+                    className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all backdrop-blur-md relative overflow-hidden ${
+                      beatElapsedSeconds >= 14 && beatElapsedSeconds < 17
+                        ? 'bg-[#0B2545]/90 border-sky-400 shadow-[0_0_25px_rgba(56,189,248,0.35)] ring-1 ring-sky-400'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] font-mono text-sky-400 font-bold mb-2 uppercase">
+                        <span className="px-2 py-0.5 rounded bg-sky-950/80 border border-sky-800">01 · Gather Context</span>
+                        <span className="w-2 h-2 rounded-full bg-sky-400" />
+                      </div>
+                      <div className="text-base font-bold text-white mb-1.5 flex items-center gap-2">
+                        <span>Ingest ARIMA (1,1,0) Signal</span>
+                      </div>
+                      <div className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Reads monthly container export volume manifests, extracts 430k–460k baseline point projection, and validates stationarity (d=1).
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                      <span>Statistical Anchor</span>
+                      <span className="text-sky-300 font-bold">MAE: 20,919 TEUs</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Step 2: Take Action */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.25 }}
+                    className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all backdrop-blur-md relative overflow-hidden ${
+                      beatElapsedSeconds >= 17 && beatElapsedSeconds < 20.5
+                        ? 'bg-[#0B2545]/90 border-amber-400 shadow-[0_0_25px_rgba(242,165,65,0.4)] ring-1 ring-amber-400'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] font-mono text-[#F2A541] font-bold mb-2 uppercase">
+                        <span className="px-2 py-0.5 rounded bg-amber-950/80 border border-amber-800">02 · Take Action</span>
+                        <span className="w-2 h-2 rounded-full bg-[#F2A541] animate-pulse" />
+                      </div>
+                      <div className="text-base font-bold text-white mb-1.5 flex items-center gap-2">
+                        <span>Commit +5% to +8% Buffer</span>
+                      </div>
+                      <div className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Pre-stages heavy crane blocks and reserves commercial berth hours to insulate against asymmetric $50,000/day carrier demurrage penalties.
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                      <span>Risk Insurance</span>
+                      <span className="text-amber-300 font-bold">+22k TEUs Headroom</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Step 3: Verify Work */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all backdrop-blur-md relative overflow-hidden ${
+                      beatElapsedSeconds >= 20.5
+                        ? 'bg-[#0B2545]/90 border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'
+                        : 'bg-slate-950/70 border-slate-800'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] font-mono text-emerald-400 font-bold mb-2 uppercase">
+                        <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-800">03 · Verify Work</span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      </div>
+                      <div className="text-base font-bold text-white mb-1.5 flex items-center gap-2">
+                        <span>Audit &amp; Human IE Sign-Off</span>
+                      </div>
+                      <div className="text-xs text-slate-300 leading-relaxed font-sans">
+                        Runs monthly tracking signals, retains ETS α=0.50 as spreadsheet backup, and enforces human engineering review if error drift exceeds 6.2%.
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                      <span>Continuous Quality</span>
+                      <span className="text-emerald-300 font-bold">ETS α=0.50 Backup</span>
+                    </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -2423,7 +2950,7 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
             >
               {/* Progress Scrub Bar (Exactly 7 Beats) */}
               <div className="grid grid-cols-7 gap-1.5 w-full">
-                {KEYNOTE_BEATS.map((beat, idx) => {
+                {KEYNOTE_BEATS.slice(0, 7).map((beat, idx) => {
                   const isPast = currentBeatIndex > idx;
                   const isCurrent = currentBeatIndex === idx;
                   const beatProgress = isCurrent
