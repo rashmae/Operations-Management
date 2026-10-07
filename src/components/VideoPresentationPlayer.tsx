@@ -308,29 +308,29 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
     return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
   };
 
-  // Centered Validation Holdout Data & Coordinates (Periods 31–36: Jul–Dec 2024)
+  // Accurate Validation Holdout Data from Matplotlib Graph & Google Colab Output (IMG_0379)
   const mlHoldoutData = useMemo(() => [
-    { period: 31, month: 'Jul 2024', actual: 445800, arima: 395788, lr: 380816, rf: 365739 },
-    { period: 32, month: 'Aug 2024', actual: 452100, arima: 435086, lr: 404950, rf: 401997 },
-    { period: 33, month: 'Sep 2024', actual: 448700, arima: 449029, lr: 416225, rf: 412902 },
-    { period: 34, month: 'Oct 2024', actual: 455200, arima: 454461, lr: 420463, rf: 433329 },
-    { period: 35, month: 'Nov 2024', actual: 458900, arima: 442723, lr: 414842, rf: 438313 },
-    { period: 36, month: 'Dec 2024', actual: 460304, arima: 427066, lr: 405430, rf: 420364 }
+    { period: 31, date: '2024-07', month: '2024-07', actual: 437961.00, arima: 395788, lr: 380816, rf: 365739 },
+    { period: 32, date: '2024-08', month: '2024-08', actual: 449897.75, arima: 435086, lr: 404950, rf: 401997 },
+    { period: 33, date: '2024-09', month: '2024-09', actual: 454819.50, arima: 449029, lr: 416225, rf: 412902 },
+    { period: 34, date: '2024-10', month: '2024-10', actual: 441773.25, arima: 454461, lr: 420463, rf: 433329 },
+    { period: 35, date: '2024-11', month: '2024-11', actual: 425911.50, arima: 442723, lr: 414842, rf: 438313 },
+    { period: 36, date: '2024-12', month: '2024-12', actual: 460304.25, arima: 427066, lr: 405430, rf: 420364 }
   ], []);
 
   // Movement dynamic sequence code requested for visualization rhythm
   const movementPulseArray = useMemo(() => [4, 6, 5.5, 9, 8, 13, 12.5, 19, 24, 23, 33, 48], []);
 
   const holdoutSvgW = 960;
-  const holdoutSvgH = 340;
-  const holdoutPadL = 75;
-  const holdoutPadR = 225;
+  const holdoutSvgH = 370;
+  const holdoutPadL = 80;
+  const holdoutPadR = 210;
   const holdoutPadT = 45;
   const holdoutPadB = 55;
   const holdoutPlotW = holdoutSvgW - holdoutPadL - holdoutPadR;
   const holdoutPlotH = holdoutSvgH - holdoutPadT - holdoutPadB;
-  const holdoutMinY = 350000;
-  const holdoutMaxY = 475000;
+  const holdoutMinY = 360000;
+  const holdoutMaxY = 465000;
 
   const getHoldoutX = (idx: number) => holdoutPadL + (idx / 5) * holdoutPlotW;
   const getHoldoutY = (val: number) => holdoutPadT + holdoutPlotH - ((val - holdoutMinY) / (holdoutMaxY - holdoutMinY)) * holdoutPlotH;
@@ -2122,48 +2122,55 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                   </div>
 
                   <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-48 md:h-60 overflow-visible">
-                    {/* Y Gridlines */}
-                    {[380000, 410000, 440000, 470000].map(v => (
+                    {/* Y Gridlines matching Matplotlib */}
+                    {[380000, 400000, 420000, 440000, 460000].map(v => (
                       <g key={v}>
-                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#1E293B" strokeDasharray="3 3" />
-                        <text x={holdoutPadL - 10} y={getHoldoutY(v) + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
-                          {(v / 1000).toFixed(0)}k
+                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#334155" strokeWidth="0.8" />
+                        <text x={holdoutPadL - 8} y={getHoldoutY(v) + 4} textAnchor="end" fill="#94A3B8" fontSize="10" fontFamily="monospace">
+                          {v}
                         </text>
                       </g>
                     ))}
 
-                    {/* Actual trajectory in ghost white */}
-                    <path d={holdoutActualPath} fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeDasharray="4 4" strokeOpacity="0.4" />
+                    {/* Vertical Gridlines at each date */}
+                    {holdoutActualPoints.map((pt, i) => (
+                      <line key={`vgrid-${i}`} x1={pt.x} y1={holdoutPadT} x2={pt.x} y2={holdoutSvgH - holdoutPadB} stroke="#1E293B" strokeWidth="0.8" strokeDasharray="2 2" />
+                    ))}
+
+                    {/* Actual trajectory in blue (#1f77b4) matching Matplotlib */}
+                    <path d={holdoutActualPath} fill="none" stroke="#1f77b4" strokeWidth="2" strokeDasharray="4 4" strokeOpacity="0.7" />
+                    {holdoutActualPoints.map((pt, i) => (
+                      <circle key={`act-${i}`} cx={pt.x} cy={pt.y} r="3.5" fill="#1f77b4" />
+                    ))}
                     
-                    {/* Lively Lagged LR Line */}
+                    {/* Lagged LR Line in Green (#2ca02c) */}
                     <path
                       d={holdoutLrPath}
                       fill="none"
-                      stroke="#38BDF8"
-                      strokeWidth="4"
+                      stroke="#2ca02c"
+                      strokeWidth="3.5"
                       strokeLinecap="round"
-                      className="anim-neon-sma"
                     />
 
-                    {/* Nodes along the LR path */}
+                    {/* Nodes along the LR path with circular markers */}
                     {holdoutLrPoints.map((pt, i) => (
                       <g key={i}>
-                        <circle cx={pt.x} cy={pt.y} r="5" fill="#38BDF8" stroke="#0F172A" strokeWidth="2" />
-                        <text x={pt.x} y={pt.y - 10} textAnchor="middle" fill="#7DD3FC" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                        <circle cx={pt.x} cy={pt.y} r="4.5" fill="#2ca02c" stroke="#FFFFFF" strokeWidth="1.5" />
+                        <text x={pt.x} y={pt.y - 10} textAnchor="middle" fill="#86EFAC" fontSize="10" fontFamily="monospace" fontWeight="bold">
                           {(pt.val / 1000).toFixed(0)}k
                         </text>
                         {/* X Axis Labels */}
-                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 20} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 18} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
                           {pt.month}
                         </text>
                       </g>
                     ))}
 
-                    {/* End Callout Badge with styled container pill */}
+                    {/* End Callout Badge with styled green container pill */}
                     <g transform={`translate(${holdoutLrPoints[5].x + 10}, ${holdoutLrPoints[5].y - 12})`}>
-                      <rect x="0" y="0" width="145" height="24" rx="6" fill="#082F49" stroke="#38BDF8" strokeWidth="1.5" />
-                      <circle cx="10" cy="12" r="3.5" fill="#38BDF8" />
-                      <text x="18" y="16" fill="#7DD3FC" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      <rect x="0" y="0" width="155" height="24" rx="6" fill="#052e16" stroke="#2ca02c" strokeWidth="1.5" />
+                      <circle cx="10" cy="12" r="3.5" fill="#2ca02c" />
+                      <text x="18" y="16" fill="#86EFAC" fontSize="11" fontFamily="monospace" fontWeight="bold">
                         Lagged LR: 405k
                       </text>
                     </g>
@@ -2217,48 +2224,55 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                   </div>
 
                   <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-48 md:h-60 overflow-visible">
-                    {/* Y Gridlines */}
-                    {[380000, 410000, 440000, 470000].map(v => (
+                    {/* Y Gridlines matching Matplotlib */}
+                    {[380000, 400000, 420000, 440000, 460000].map(v => (
                       <g key={v}>
-                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#1E293B" strokeDasharray="3 3" />
-                        <text x={holdoutPadL - 10} y={getHoldoutY(v) + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
-                          {(v / 1000).toFixed(0)}k
+                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#334155" strokeWidth="0.8" />
+                        <text x={holdoutPadL - 8} y={getHoldoutY(v) + 4} textAnchor="end" fill="#94A3B8" fontSize="10" fontFamily="monospace">
+                          {v}
                         </text>
                       </g>
                     ))}
 
-                    {/* Actual trajectory in ghost white */}
-                    <path d={holdoutActualPath} fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeDasharray="4 4" strokeOpacity="0.4" />
+                    {/* Vertical Gridlines at each date */}
+                    {holdoutActualPoints.map((pt, i) => (
+                      <line key={`vgrid-rf-${i}`} x1={pt.x} y1={holdoutPadT} x2={pt.x} y2={holdoutSvgH - holdoutPadB} stroke="#1E293B" strokeWidth="0.8" strokeDasharray="2 2" />
+                    ))}
+
+                    {/* Actual trajectory in blue (#1f77b4) matching Matplotlib */}
+                    <path d={holdoutActualPath} fill="none" stroke="#1f77b4" strokeWidth="2" strokeDasharray="4 4" strokeOpacity="0.7" />
+                    {holdoutActualPoints.map((pt, i) => (
+                      <circle key={`act-rf-${i}`} cx={pt.x} cy={pt.y} r="3.5" fill="#1f77b4" />
+                    ))}
                     
-                    {/* Lively Random Forest Line */}
+                    {/* Random Forest Line in Red (#d62728) */}
                     <path
                       d={holdoutRfPath}
                       fill="none"
-                      stroke="#C084FC"
-                      strokeWidth="4"
+                      stroke="#d62728"
+                      strokeWidth="3.5"
                       strokeLinecap="round"
-                      style={{ filter: 'drop-shadow(0 0 8px rgba(192,132,252,0.6))' }}
                     />
 
-                    {/* Nodes along the RF path */}
+                    {/* Nodes along the RF path with circular markers */}
                     {holdoutRfPoints.map((pt, i) => (
                       <g key={i}>
-                        <circle cx={pt.x} cy={pt.y} r="5" fill="#C084FC" stroke="#0F172A" strokeWidth="2" />
-                        <text x={pt.x} y={pt.y - 10} textAnchor="middle" fill="#E9D5FF" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                        <circle cx={pt.x} cy={pt.y} r="4.5" fill="#d62728" stroke="#FFFFFF" strokeWidth="1.5" />
+                        <text x={pt.x} y={pt.y - 10} textAnchor="middle" fill="#FCA5A5" fontSize="10" fontFamily="monospace" fontWeight="bold">
                           {(pt.val / 1000).toFixed(0)}k
                         </text>
                         {/* X Axis Labels */}
-                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 20} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 18} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
                           {pt.month}
                         </text>
                       </g>
                     ))}
 
-                    {/* End Callout Badge with styled container pill */}
+                    {/* End Callout Badge with styled red container pill */}
                     <g transform={`translate(${holdoutRfPoints[5].x + 10}, ${holdoutRfPoints[5].y - 12})`}>
-                      <rect x="0" y="0" width="165" height="24" rx="6" fill="#1E1B4B" stroke="#C084FC" strokeWidth="1.5" />
-                      <circle cx="10" cy="12" r="3.5" fill="#C084FC" />
-                      <text x="18" y="16" fill="#E9D5FF" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                      <rect x="0" y="0" width="165" height="24" rx="6" fill="#450a0a" stroke="#d62728" strokeWidth="1.5" />
+                      <circle cx="10" cy="12" r="3.5" fill="#d62728" />
+                      <text x="18" y="16" fill="#FCA5A5" fontSize="11" fontFamily="monospace" fontWeight="bold">
                         Random Forest: 420k
                       </text>
                     </g>
@@ -2315,105 +2329,263 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                   All 3 Contenders Overlapped on Unseen Validation Trajectory
                 </div>
 
-                {/* Centered Large SVG Line Graph with All 3 Models + Actuals */}
-                <div className="relative w-full rounded-2xl bg-slate-950/85 border border-slate-800 p-4 shadow-2xl backdrop-blur-md overflow-hidden">
-                  <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-52 md:h-64 overflow-visible">
-                    {/* Y Gridlines */}
-                    {[380000, 410000, 440000, 470000].map(v => (
+                {/* Centered Large SVG Line Graph with All 3 Models + Actuals matching Matplotlib IMG_0379 */}
+                <div className="relative w-full rounded-2xl bg-slate-950/90 border border-slate-800 p-3 sm:p-4 shadow-2xl backdrop-blur-md overflow-hidden">
+                  <svg viewBox={`0 0 ${holdoutSvgW} ${holdoutSvgH}`} className="w-full h-60 md:h-72 overflow-visible">
+                    {/* Plot Title */}
+                    <text
+                      x={holdoutPadL + holdoutPlotW / 2}
+                      y="26"
+                      textAnchor="middle"
+                      fill="#FFFFFF"
+                      fontSize="16"
+                      fontFamily="sans-serif"
+                      fontWeight="bold"
+                    >
+                      Actual vs. Python-Assisted Forecasts
+                    </text>
+
+                    {/* Left Y-Axis Label: Actual Value */}
+                    <text
+                      x={-(holdoutPadT + holdoutPlotH / 2)}
+                      y="22"
+                      transform="rotate(-90)"
+                      textAnchor="middle"
+                      fill="#94A3B8"
+                      fontSize="11"
+                      fontFamily="sans-serif"
+                    >
+                      Actual Value
+                    </text>
+
+                    {/* Bottom X-Axis Label: Date */}
+                    <text
+                      x={holdoutPadL + holdoutPlotW / 2}
+                      y={holdoutSvgH - 12}
+                      textAnchor="middle"
+                      fill="#94A3B8"
+                      fontSize="11"
+                      fontFamily="sans-serif"
+                    >
+                      Date
+                    </text>
+
+                    {/* Outer Plot Box Border */}
+                    <rect
+                      x={holdoutPadL}
+                      y={holdoutPadT}
+                      width={holdoutPlotW}
+                      height={holdoutPlotH}
+                      fill="none"
+                      stroke="#475569"
+                      strokeWidth="1"
+                    />
+
+                    {/* Horizontal Y Gridlines & Ticks (380000 to 460000) */}
+                    {[380000, 400000, 420000, 440000, 460000].map(v => (
                       <g key={v}>
-                        <line x1={holdoutPadL} y1={getHoldoutY(v)} x2={holdoutSvgW - holdoutPadR} y2={getHoldoutY(v)} stroke="#1E293B" strokeDasharray="3 3" />
-                        <text x={holdoutPadL - 10} y={getHoldoutY(v) + 4} textAnchor="end" fill="#64748B" fontSize="10" fontFamily="monospace">
-                          {(v / 1000).toFixed(0)}k
+                        <line
+                          x1={holdoutPadL}
+                          y1={getHoldoutY(v)}
+                          x2={holdoutPadL + holdoutPlotW}
+                          y2={getHoldoutY(v)}
+                          stroke="#334155"
+                          strokeWidth="0.8"
+                        />
+                        <text
+                          x={holdoutPadL - 8}
+                          y={getHoldoutY(v) + 4}
+                          textAnchor="end"
+                          fill="#94A3B8"
+                          fontSize="10"
+                          fontFamily="monospace"
+                        >
+                          {v}
                         </text>
                       </g>
                     ))}
 
-                    {/* 1. Actual Validation Curve in Bold White */}
-                    <path
-                      d={holdoutActualPath}
-                      fill="none"
-                      stroke="#F8FAFC"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.7))' }}
-                    />
-
-                    {/* 2. ARIMA (1,1,0) Curve in Glowing Amber (WINNER) */}
-                    <path
-                      d={holdoutArimaPath}
-                      fill="none"
-                      stroke="#F2A541"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      className="anim-neon-ets"
-                    />
-
-                    {/* 3. Random Forest Curve in Purple */}
-                    <path
-                      d={holdoutRfPath}
-                      fill="none"
-                      stroke="#C084FC"
-                      strokeWidth="2.5"
-                      strokeDasharray="5 3"
-                      strokeLinecap="round"
-                    />
-
-                    {/* 4. Lagged Linear Regression Curve in Sky Blue */}
-                    <path
-                      d={holdoutLrPath}
-                      fill="none"
-                      stroke="#38BDF8"
-                      strokeWidth="2.5"
-                      strokeDasharray="3 3"
-                      strokeLinecap="round"
-                    />
-
-                    {/* Data Points on Actual */}
+                    {/* Vertical X Gridlines & Month Ticks (2024-07 to 2024-12) */}
                     {holdoutActualPoints.map((pt, i) => (
-                      <g key={i}>
-                        <rect x={pt.x - 3.5} y={pt.y - 3.5} width="7" height="7" fill="#F8FAFC" transform={`rotate(45 ${pt.x} ${pt.y})`} />
-                        {/* Month X-Axis Label */}
-                        <text x={pt.x} y={holdoutSvgH - holdoutPadB + 20} textAnchor="middle" fill="#94A3B8" fontSize="11" fontFamily="monospace">
+                      <g key={`v-grid-${i}`}>
+                        <line
+                          x1={pt.x}
+                          y1={holdoutPadT}
+                          x2={pt.x}
+                          y2={holdoutPadT + holdoutPlotH}
+                          stroke="#334155"
+                          strokeWidth="0.8"
+                        />
+                        <text
+                          x={pt.x}
+                          y={holdoutPadT + holdoutPlotH + 18}
+                          textAnchor="middle"
+                          fill="#94A3B8"
+                          fontSize="11"
+                          fontFamily="monospace"
+                        >
                           {pt.month}
                         </text>
                       </g>
                     ))}
 
-                    {/* Direct Right-Hand Labels at Period 36 with styled glowing badges */}
-                    <g transform={`translate(${holdoutActualPoints[5].x + 12}, 0)`}>
+                    {/* 1. Actual Validation Curve in Blue (#1f77b4) */}
+                    <path
+                      d={holdoutActualPath}
+                      fill="none"
+                      stroke="#1f77b4"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    {holdoutActualPoints.map((pt, i) => (
+                      <circle
+                        key={`pt-act-${i}`}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r="4.5"
+                        fill="#1f77b4"
+                        stroke="#FFFFFF"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* 2. ARIMA (1,1,0) Curve in Orange (#ff7f0e) */}
+                    <path
+                      d={holdoutArimaPath}
+                      fill="none"
+                      stroke="#ff7f0e"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    {holdoutArimaPoints.map((pt, i) => (
+                      <circle
+                        key={`pt-ar-${i}`}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r="4.5"
+                        fill="#ff7f0e"
+                        stroke="#FFFFFF"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* 3. Lagged Linear Regression Curve in Green (#2ca02c) */}
+                    <path
+                      d={holdoutLrPath}
+                      fill="none"
+                      stroke="#2ca02c"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    {holdoutLrPoints.map((pt, i) => (
+                      <circle
+                        key={`pt-lr-${i}`}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r="4.5"
+                        fill="#2ca02c"
+                        stroke="#FFFFFF"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* 4. Random Forest Curve in Red (#d62728) */}
+                    <path
+                      d={holdoutRfPath}
+                      fill="none"
+                      stroke="#d62728"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    {holdoutRfPoints.map((pt, i) => (
+                      <circle
+                        key={`pt-rf-${i}`}
+                        cx={pt.x}
+                        cy={pt.y}
+                        r="4.5"
+                        fill="#d62728"
+                        stroke="#FFFFFF"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {/* Matplotlib Style Legend Box (Bottom Right) */}
+                    <g transform={`translate(${holdoutPadL + holdoutPlotW - 195}, ${holdoutPadT + holdoutPlotH - 105})`}>
+                      <rect
+                        x="0"
+                        y="0"
+                        width="185"
+                        height="95"
+                        rx="4"
+                        fill="#0F172A"
+                        fillOpacity="0.95"
+                        stroke="#475569"
+                        strokeWidth="1"
+                      />
+                      {/* Actual */}
+                      <circle cx="16" cy="16" r="4" fill="#1f77b4" />
+                      <line x1="8" y1="16" x2="24" y2="16" stroke="#1f77b4" strokeWidth="2" />
+                      <text x="32" y="20" fill="#E2E8F0" fontSize="11" fontFamily="sans-serif">
+                        Actual
+                      </text>
+
+                      {/* ARIMA */}
+                      <circle cx="16" cy="38" r="4" fill="#ff7f0e" />
+                      <line x1="8" y1="38" x2="24" y2="38" stroke="#ff7f0e" strokeWidth="2" />
+                      <text x="32" y="42" fill="#E2E8F0" fontSize="11" fontFamily="sans-serif">
+                        ARIMA
+                      </text>
+
+                      {/* Lagged Linear Regression */}
+                      <circle cx="16" cy="60" r="4" fill="#2ca02c" />
+                      <line x1="8" y1="60" x2="24" y2="60" stroke="#2ca02c" strokeWidth="2" />
+                      <text x="32" y="64" fill="#E2E8F0" fontSize="10" fontFamily="sans-serif">
+                        Lagged Linear Regression
+                      </text>
+
+                      {/* Random Forest */}
+                      <circle cx="16" cy="82" r="4" fill="#d62728" />
+                      <line x1="8" y1="82" x2="24" y2="82" stroke="#d62728" strokeWidth="2" />
+                      <text x="32" y="86" fill="#E2E8F0" fontSize="11" fontFamily="sans-serif">
+                        Random Forest
+                      </text>
+                    </g>
+
+                    {/* Period 36 Callout Badges on Right Margin */}
+                    <g transform={`translate(${holdoutPadL + holdoutPlotW + 12}, 0)`}>
                       {/* Actual Data Badge */}
                       <g transform={`translate(0, ${holdoutActualPoints[5].y - 12})`}>
-                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#0F172A" stroke="#FFFFFF" strokeOpacity="0.4" strokeWidth="1" />
-                        <circle cx="10" cy="11" r="3.5" fill="#FFFFFF" />
+                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#0F172A" stroke="#1f77b4" strokeWidth="1.2" />
+                        <circle cx="10" cy="11" r="3.5" fill="#1f77b4" />
                         <text x="20" y="15" fill="#FFFFFF" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                          Actual: 460,422 TEUs
+                          Actual: 460,304 TEUs
                         </text>
                       </g>
 
                       {/* ARIMA (1,1,0) Winner Badge - Glowing */}
                       <g transform={`translate(0, ${holdoutArimaPoints[5].y - 13})`}>
-                        <rect x="0" y="0" width="195" height="25" rx="6" fill="#451A03" stroke="#F2A541" strokeWidth="1.6" />
-                        <circle cx="10" cy="12.5" r="4" fill="#F2A541" />
-                        <text x="20" y="17" fill="#F2A541" fontSize="11" fontFamily="monospace" fontWeight="bold">
-                          ★ ARIMA: 427k (20,919 MAE)
+                        <rect x="0" y="0" width="185" height="25" rx="6" fill="#451A03" stroke="#ff7f0e" strokeWidth="1.6" />
+                        <circle cx="10" cy="12.5" r="4" fill="#ff7f0e" />
+                        <text x="20" y="17" fill="#ff7f0e" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                          ★ ARIMA: 427,066
                         </text>
                       </g>
 
                       {/* Random Forest Badge */}
                       <g transform={`translate(0, ${holdoutRfPoints[5].y - 11})`}>
-                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#1E1B4B" stroke="#C084FC" strokeOpacity="0.5" strokeWidth="1" />
-                        <circle cx="10" cy="11" r="3" fill="#C084FC" />
-                        <text x="18" y="15" fill="#E9D5FF" fontSize="10.5" fontFamily="monospace">
-                          RF: 420k (37,138 MAE)
+                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#450a0a" stroke="#d62728" strokeWidth="1" />
+                        <circle cx="10" cy="11" r="3" fill="#d62728" />
+                        <text x="18" y="15" fill="#FCA5A5" fontSize="10.5" fontFamily="monospace">
+                          RF: 420,364 TEUs
                         </text>
                       </g>
 
                       {/* Lagged LR Badge */}
                       <g transform={`translate(0, ${holdoutLrPoints[5].y - 11})`}>
-                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#082F49" stroke="#38BDF8" strokeOpacity="0.5" strokeWidth="1" />
-                        <circle cx="10" cy="11" r="3" fill="#38BDF8" />
-                        <text x="18" y="15" fill="#7DD3FC" fontSize="10.5" fontFamily="monospace">
-                          LR: 405k (37,990 MAE)
+                        <rect x="0" y="0" width="165" height="22" rx="6" fill="#052e16" stroke="#2ca02c" strokeWidth="1" />
+                        <circle cx="10" cy="11" r="3" fill="#2ca02c" />
+                        <text x="18" y="15" fill="#86EFAC" fontSize="10.5" fontFamily="monospace">
+                          LR: 405,430 TEUs
                         </text>
                       </g>
                     </g>
@@ -2449,23 +2621,23 @@ export const VideoPresentationPlayer: React.FC<VideoPresentationPlayerProps> = (
                     </span>
                   </div>
 
-                  {/* Bottom Legend */}
+                  {/* Bottom Legend matching Matplotlib IMG_0379 */}
                   <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-mono pt-2 text-slate-300">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-1 bg-white rounded" />
-                      <span className="font-bold text-white">Actual Data (445k–460k)</span>
+                      <span className="w-3 h-3 rounded-full bg-[#1f77b4]" />
+                      <span className="font-bold text-white">Actual (426k–460k TEUs)</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-1 bg-[#F2A541] rounded" />
-                      <span className="font-bold text-[#F2A541]">ARIMA (1,1,0) · 20,919 MAE (Winner)</span>
+                      <span className="w-3 h-3 rounded-full bg-[#ff7f0e]" />
+                      <span className="font-bold text-[#ff7f0e]">ARIMA (1,1,0) · 20,919 MAE (Winner)</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-1 bg-purple-400 rounded" />
-                      <span className="text-purple-300">Random Forest · 37,138 MAE</span>
+                      <span className="w-3 h-3 rounded-full bg-[#2ca02c]" />
+                      <span className="text-[#86EFAC]">Lagged Linear Regression · 37,990 MAE</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-1 bg-sky-400 rounded" />
-                      <span className="text-sky-300">Lagged LR · 37,990 MAE</span>
+                      <span className="w-3 h-3 rounded-full bg-[#d62728]" />
+                      <span className="text-[#FCA5A5]">Random Forest · 37,138 MAE</span>
                     </span>
                   </div>
                 </div>
